@@ -1,0 +1,458 @@
+{
+  "settings": {
+    "theme": "light",
+    "language": "en",
+    "notifications": true
+  },
+  "projects": [
+    {
+      "id": "proj-001",
+      "userId": "user-001",
+      "createdAt": "2025-05-01T10:00:00Z",
+      "status": "blueprint",
+      "previewImageUrl": "https://picsum.photos/id/237/150/150",
+      "name": "Summer Collection T-Shirt",
+      "garmentColor": "#FFFFFF",
+      "garmentSize": "M",
+      "lastModified": "2025-05-01T15:30:00Z",
+      "genre": "women",
+      "canvas": {
+        "id": "canvas-001",
+        "projectId": "proj-001",
+        "backgroundColor": "#FFFFFF",
+        "createdAt": "2025-05-01T10:00:00Z",
+        "lastModified": "2025-05-01T15:30:00Z",
+        "layers": [
+          {
+            "id": "layer-001",
+            "canvasId": "canvas-001",
+            "type": "text",
+            "zIndex": 1,
+            "isVisible": true,
+            "createdAt": "2025-05-01T10:05:00Z",
+            "content": {
+              "text": "Summer Vibes",
+              "x": 100,
+              "y": 150,
+              "fontFamily": "Arial",
+              "fontSize": 24,
+              "color": "#000000",
+              "bold": true,
+              "italic": false,
+              "underline": false,
+              "dragging": false,
+              "offsetX": 0,
+              "offsetY": 0
+            }
+          },
+          {
+            "id": "layer-002",
+            "canvasId": "canvas-001",
+            "type": "image",
+            "zIndex": 2,
+            "isVisible": true,
+            "createdAt": "2025-05-01T10:10:00Z",
+            "content": {
+              "imageUrl": "https://picsum.photos/id/25/200/200",
+              "width": 200,
+              "height": 200,
+              "scale": 1,
+              "maintainAspectRatio": true,
+              "x": 150,
+              "y": 200,
+              "dragging": false,
+              "offsetX": 0,
+              "offsetY": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "proj-002",
+      "userId": "user-001",
+      "createdAt": "2025-05-02T14:20:00Z",
+      "status": "designed-garment",
+      "previewImageUrl": "https://picsum.photos/id/1005/150/150",
+      "name": "Urban Style Design",
+      "garmentColor": "#161615",
+      "garmentSize": "L",
+      "lastModified": "2025-05-02T19:15:00Z",
+      "genre": "women",
+      "canvas": {
+        "id": "canvas-002",
+        "projectId": "proj-002",
+        "backgroundColor": "#161615",
+        "createdAt": "2025-05-02T14:20:00Z",
+        "lastModified": "2025-05-02T19:15:00Z",
+        "layers": [
+          {
+            "id": "layer-003",
+            "canvasId": "canvas-002",
+            "type": "text",
+            "zIndex": 1,
+            "isVisible": true,
+            "createdAt": "2025-05-02T14:25:00Z",
+            "content": {
+              "text": "Urban Style",
+              "x": 100,
+              "y": 150,
+              "fontFamily": "Helvetica",
+              "fontSize": 32,
+              "color": "#FFFFFF",
+              "bold": true,
+              "italic": false,
+              "underline": false,
+              "dragging": false,
+              "offsetX": 0,
+              "offsetY": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "proj-003",
+      "userId": "user-001",
+      "createdAt": "2025-05-03T08:00:00Z",
+      "status": "blueprint",
+      "previewImageUrl": "https://picsum.photos/id/1084/150/150",
+      "name": "Beach Party Design",
+      "garmentColor": "#FFD700",
+      "garmentSize": "S",
+      "lastModified": "2025-05-03T08:30:00Z",
+      "genre": "men",
+      "canvas": {
+        "id": "canvas-003",
+        "projectId": "proj-003",
+        "backgroundColor": "#FFD700",
+        "createdAt": "2025-05-03T08:00:00Z",
+        "lastModified": "2025-05-03T08:30:00Z",
+        "layers": []
+      }
+    },
+    {
+      "id": "proj-004",
+      "userId": "user-001",
+      "createdAt": "2025-05-04T09:00:00Z",
+      "status": "designed-garment",
+      "previewImageUrl": "https://picsum.photos/id/1016/150/150",
+      "name": "Winter Wonderland",
+      "garmentColor": "#EDEDED",
+      "garmentSize": "L",
+      "lastModified": "2025-05-04T09:30:00Z",
+      "genre": "men",
+      "canvas": {
+        "id": "canvas-004",
+        "projectId": "proj-004",
+        "backgroundColor": "#EDEDED",
+        "createdAt": "2025-05-04T09:00:00Z",
+        "lastModified": "2025-05-04T09:30:00Z",
+        "layers": [
+          {
+            "id": "layer-004",
+            "canvasId": "canvas-004",
+            "type": "text",
+            "zIndex": 1,
+            "isVisible": true,
+            "createdAt": "2025-05-04T09:10:00Z",
+            "content": {
+              "text": "Winter Wonderland",
+              "x": 80,
+              "y": 120,
+              "fontFamily": "Georgia",
+              "fontSize": 28,
+              "color": "#1B3D92",
+              "bold": true,
+              "italic": false,
+              "underline": false,
+              "dragging": false,
+              "offsetX": 0,
+              "offsetY": 0
+            }
+          },
+          {
+            "id": "layer-005",
+            "canvasId": "canvas-004",
+            "type": "image",
+            "zIndex": 2,
+            "isVisible": true,
+            "createdAt": "2025-05-04T09:15:00Z",
+            "content": {
+              "imageUrl": "https://picsum.photos/id/1020/200/200",
+              "width": 180,
+              "height": 180,
+              "scale": 0.9,
+              "maintainAspectRatio": true,
+              "x": 130,
+              "y": 180,
+              "dragging": false,
+              "offsetX": 0,
+              "offsetY": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "proj-005",
+      "userId": "user-001",
+      "createdAt": "2025-05-05T10:00:00Z",
+      "status": "blueprint",
+      "previewImageUrl": "https://picsum.photos/id/1062/150/150",
+      "name": "Spring Blossom",
+      "garmentColor": "#F459B0",
+      "garmentSize": "M",
+      "lastModified": "2025-05-05T10:30:00Z",
+      "genre": "women",
+      "canvas": {
+        "id": "canvas-005",
+        "projectId": "proj-005",
+        "backgroundColor": "#F459B0",
+        "createdAt": "2025-05-05T10:00:00Z",
+        "lastModified": "2025-05-05T10:30:00Z",
+        "layers": []
+      }
+    },
+    {
+      "id": "proj-006",
+      "userId": "user-001",
+      "createdAt": "2025-05-06T11:00:00Z",
+      "status": "designed-garment",
+      "previewImageUrl": "https://picsum.photos/id/1069/150/150",
+      "name": "Autumn Leaves",
+      "garmentColor": "#B51B14",
+      "garmentSize": "XL",
+      "lastModified": "2025-05-06T11:30:00Z",
+      "genre": "men",
+      "canvas": {
+        "id": "canvas-006",
+        "projectId": "proj-006",
+        "backgroundColor": "#B51B14",
+        "createdAt": "2025-05-06T11:00:00Z",
+        "lastModified": "2025-05-06T11:30:00Z",
+        "layers": [
+          {
+            "id": "layer-006",
+            "canvasId": "canvas-006",
+            "type": "text",
+            "zIndex": 1,
+            "isVisible": true,
+            "createdAt": "2025-05-06T11:05:00Z",
+            "content": {
+              "text": "Autumn Collection",
+              "x": 90,
+              "y": 140,
+              "fontFamily": "Verdana",
+              "fontSize": 26,
+              "color": "#EDEDED",
+              "bold": true,
+              "italic": false,
+              "underline": false,
+              "dragging": false,
+              "offsetX": 0,
+              "offsetY": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "proj-007",
+      "userId": "user-001",
+      "createdAt": "2025-05-07T12:00:00Z",
+      "status": "completed",
+      "previewImageUrl": "https://picsum.photos/id/1074/150/150",
+      "name": "Sports Team Logo",
+      "garmentColor": "#5BBE65",
+      "garmentSize": "M",
+      "lastModified": "2025-05-07T12:30:00Z",
+      "genre": "unisex",
+      "canvas": {
+        "id": "canvas-007",
+        "projectId": "proj-007",
+        "backgroundColor": "#5BBE65",
+        "createdAt": "2025-05-07T12:00:00Z",
+        "lastModified": "2025-05-07T12:30:00Z",
+        "layers": [
+          {
+            "id": "layer-007",
+            "canvasId": "canvas-007",
+            "type": "image",
+            "zIndex": 1,
+            "isVisible": true,
+            "createdAt": "2025-05-07T12:05:00Z",
+            "content": {
+              "imageUrl": "https://picsum.photos/id/1076/200/200",
+              "width": 220,
+              "height": 220,
+              "scale": 1.1,
+              "maintainAspectRatio": true,
+              "x": 110,
+              "y": 150,
+              "dragging": false,
+              "offsetX": 0,
+              "offsetY": 0
+            }
+          },
+          {
+            "id": "layer-008",
+            "canvasId": "canvas-007",
+            "type": "text",
+            "zIndex": 2,
+            "isVisible": true,
+            "createdAt": "2025-05-07T12:10:00Z",
+            "content": {
+              "text": "CHAMPIONS",
+              "x": 100,
+              "y": 250,
+              "fontFamily": "Impact",
+              "fontSize": 30,
+              "color": "#EDEDED",
+              "bold": false,
+              "italic": false,
+              "underline": false,
+              "dragging": false,
+              "offsetX": 0,
+              "offsetY": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "proj-008",
+      "userId": "user-001",
+      "createdAt": "2025-05-08T13:00:00Z",
+      "status": "blueprint",
+      "previewImageUrl": "https://picsum.photos/id/1079/150/150",
+      "name": "Vintage Style",
+      "garmentColor": "#403D3B",
+      "garmentSize": "S",
+      "lastModified": "2025-05-08T13:30:00Z",
+      "genre": "women",
+      "canvas": {
+        "id": "canvas-008",
+        "projectId": "proj-008",
+        "backgroundColor": "#403D3B",
+        "createdAt": "2025-05-08T13:00:00Z",
+        "lastModified": "2025-05-08T13:30:00Z",
+        "layers": []
+      }
+    },
+    {
+      "id": "proj-009",
+      "userId": "user-001",
+      "createdAt": "2025-05-09T14:00:00Z",
+      "status": "completed",
+      "previewImageUrl": "https://picsum.photos/id/1080/150/150",
+      "name": "Music Festival",
+      "garmentColor": "#D890E4",
+      "garmentSize": "L",
+      "lastModified": "2025-05-09T14:30:00Z",
+      "genre": "unisex",
+      "canvas": {
+        "id": "canvas-009",
+        "projectId": "proj-009",
+        "backgroundColor": "#D890E4",
+        "createdAt": "2025-05-09T14:00:00Z",
+        "lastModified": "2025-05-09T14:30:00Z",
+        "layers": [
+          {
+            "id": "layer-009",
+            "canvasId": "canvas-009",
+            "type": "text",
+            "zIndex": 1,
+            "isVisible": true,
+            "createdAt": "2025-05-09T14:05:00Z",
+            "content": {
+              "text": "MUSIC FESTIVAL 2025",
+              "x": 80,
+              "y": 130,
+              "fontFamily": "Courier New",
+              "fontSize": 24,
+              "color": "#EDEDED",
+              "bold": true,
+              "italic": false,
+              "underline": false,
+              "dragging": false,
+              "offsetX": 0,
+              "offsetY": 0
+            }
+          },
+          {
+            "id": "layer-010",
+            "canvasId": "canvas-009",
+            "type": "image",
+            "zIndex": 2,
+            "isVisible": true,
+            "createdAt": "2025-05-09T14:10:00Z",
+            "content": {
+              "imageUrl": "https://picsum.photos/id/1082/200/200",
+              "width": 200,
+              "height": 200,
+              "scale": 1,
+              "maintainAspectRatio": true,
+              "x": 120,
+              "y": 180,
+              "dragging": false,
+              "offsetX": 0,
+              "offsetY": 0
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "9a5cb46d-8aa3-4851-9289-45ec8fa4dcf5",
+      "userId": "user-001",
+      "createdAt": "2025-05-12T05:41:06.956Z",
+      "status": "blueprint",
+      "genre": "men",
+      "previewImageUrl": "https://picsum.photos/id/1083/150/150",
+      "name": "Mateo",
+      "garmentColor": "black",
+      "garmentSize": "M",
+      "lastModified": "2025-05-12T05:41:06.956Z",
+      "canvas": {
+        "id": "canvas-mateo",
+        "projectId": "9a5cb46d-8aa3-4851-9289-45ec8fa4dcf5",
+        "backgroundColor": "black",
+        "createdAt": "2025-05-12T05:41:06.956Z",
+        "lastModified": "2025-05-12T05:41:06.956Z",
+        "layers": []
+      }
+    },
+    {
+      "id": "03b5dd4b-b7d4-4496-b9b3-bf23981d4703",
+      "userId": "user-001",
+      "name": "asdascacss",
+      "genre": "men",
+      "garmentColor": "#161615",
+      "garmentSize": "M",
+      "status": "blueprint",
+      "createdAt": "2025-05-13T01:08:51.988Z",
+      "lastModified": "2025-05-13T01:08:51.988Z",
+      "previewImageUrl": "https://placeholder.com/tshirt",
+      "canvas": {
+        "id": "71872d36-885b-4472-ac30-e0f22290624c",
+        "projectId": "03b5dd4b-b7d4-4496-b9b3-bf23981d4703",
+        "backgroundColor": "#161615",
+        "createdAt": "2025-05-13T01:08:51.988Z",
+        "lastModified": "2025-05-13T01:08:51.988Z",
+        "layers": []
+      }
+    }
+  ],
+  "templates": [],
+  "favorites": [],
+  "designs": [],
+  "users": [
+    {
+      "id": "user-001",
+      "email": "user@example.com",
+      "name": "Test User",
+      "createdAt": "2024-03-19T00:00:00Z"
+    }
+  ]
+}
