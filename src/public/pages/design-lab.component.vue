@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { ProjectService } from "../../design-lab/services/project.service.js";
 import { ProjectAssembler } from "../../design-lab/services/project.assembler.js";
 import Card from "primevue/card";
@@ -10,6 +10,47 @@ const projects = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const toast = useToast();
+
+const garmentColors = [
+  { label: "black", value: "#161615" },      // row 0, col 0
+  { label: "gray", value: "#403D3B" },      // row 0, col 1
+  { label: "light-gray", value: "#B3B1AF" },// row 0, col 2
+  { label: "white", value: "#EDEDED" },     // row 0, col 3
+  { label: "red", value: "#B51B14" },       // row 1, col 0
+  { label: "pink", value: "#F459B0" },      // row 1, col 1
+  { label: "light-purple", value: "#D890E4" },// row 1, col 2
+  { label: "purple", value: "#693FA0" },    // row 1, col 3
+  { label: "light-blue", value: "#00A5BC" },// row 2, col 0
+  { label: "cyan", value: "#31B7C9" },      // row 2, col 1
+  { label: "sky-blue", value: "#3F9BDC" },  // row 2, col 2
+  { label: "blue", value: "#1B3D92" },      // row 2, col 3
+  { label: "green", value: "#1B8937" },     // row 3, col 0
+  { label: "light-green", value: "#5BBE65" },// row 3, col 1
+  { label: "yellow", value: "#FECD08" },    // row 3, col 2
+  { label: "dark-yellow", value: "#F2AB00" } // row 3, col 3
+];
+
+const garmentColorImages = "https://res.cloudinary.com/dkkfv72vo/image/upload/v1747000549/Frame_530_hfhrko.webp";
+
+// Function to get the crop position for a specific color
+function getGarmentColorCropStyle(colorLabel) {
+    // Find the color in the array
+    const colorIndex = garmentColors.findIndex(color => color.label === colorLabel);
+    
+    if (colorIndex === -1) return { backgroundPosition: '0 0' }; // Default to first color if not found
+    
+    // Calculate row and column (assuming 4 columns per row as indicated in the comments)
+    const row = Math.floor(colorIndex / 4);
+    const col = colorIndex % 4;
+    
+    // Use 600px x 600px for each color in the 2400px x 2400px spritesheet
+    return {
+        backgroundImage: `url(${garmentColorImages})`,
+        backgroundPosition: `-${col * 600}px -${row * 600}px`,
+        backgroundSize: '2400px 2400px',
+        backgroundRepeat: 'no-repeat'
+    };
+};
 
 onMounted(async () => {
     try {
@@ -38,18 +79,18 @@ onMounted(async () => {
         <div v-if="loading">Loading...</div>
         <div v-else-if="error">Error: {{ error.message }}</div>
         <ul v-else>
-            <li v-for="project in projects" :key="project.id">
-                <router-link
+            <li v-for="project in projects" :key="project.id">                <router-link
                     :to="`/design-lab/${project.id}`"
                     class="card-link"
                 >
                     <Card>
                         <template #header>
-                            <img
-                                :src="project.previewImageUrl"
-                                alt="Project preview"
-                                class="project-image"
-                            />
+                            <div class="project-preview-container">
+                                <div 
+                                    class="garment-preview"
+                                    :style="getGarmentColorCropStyle(project.garmentColor)"
+                                ></div>
+                            </div>
                         </template>
                         <template #subtitle>
                             {{ project.name }}
@@ -91,12 +132,32 @@ li {
     min-height: 220px;
 }
 
+.project-preview-container {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    background-color: #f9f9f9;
+    border-radius: 8px 8px 0 0;
+}
+
 .project-image {
     width: 100%;
-    height: 120px;
+    height: 100%;
     object-fit: cover;
-    border-radius: 4px 4px 0 0;
+    border-radius: 8px 8px 0 0;
     background: #f4f4f4;
+}
+
+.garment-preview {
+    width: 100%;
+    height: 100%;
+    background-repeat: no-repeat;
+    background-position: center;
+    transform: scale(0.9); /* Slightly scale down to ensure it fits nicely */
 }
 
 .project-name {

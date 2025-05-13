@@ -10,6 +10,8 @@ const http = axios.create({
 
 export class ProjectService {
     async getProjects() {
+        console.log("Fetching projects...");
+        console.log(baseUrl)
         try {
             return await http.get("/projects");
         } catch (error) {
