@@ -16,7 +16,7 @@ const error = ref(null);
 const selectedOption = ref("color");
 const layers = ref([]);
 
-const garmentColorImages = "https://res.cloudinary.com/dkkfv72vo/image/upload/v1747000549/Frame_530_hfhrko.webp";
+const garmentColorImages = import.meta.env.VITE_GARMENT_COLOR_IMAGE_URL;
 const garmentColors = [
     { label: "black", value: "#161615" },      // row 0, col 0
     { label: "gray", value: "#403D3B" },      // row 0, col 1
