@@ -30,20 +30,16 @@ const garmentColors = [
   { label: "dark-yellow", value: "#F2AB00" } // row 3, col 3
 ];
 
-const garmentColorImages = "https://res.cloudinary.com/dkkfv72vo/image/upload/v1747000549/Frame_530_hfhrko.webp";
+const garmentColorImages = import.meta.env.VITE_GARMENT_COLOR_IMAGE_URL;
 
-// Function to get the crop position for a specific color
 function getGarmentColorCropStyle(colorLabel) {
-    // Find the color in the array
     const colorIndex = garmentColors.findIndex(color => color.label === colorLabel);
     
     if (colorIndex === -1) return { backgroundPosition: '0 0' }; // Default to first color if not found
-    
-    // Calculate row and column (assuming 4 columns per row as indicated in the comments)
+
     const row = Math.floor(colorIndex / 4);
     const col = colorIndex % 4;
     
-    // Use 600px x 600px for each color in the 2400px x 2400px spritesheet
     return {
         backgroundImage: `url(${garmentColorImages})`,
         backgroundPosition: `-${col * 600}px -${row * 600}px`,

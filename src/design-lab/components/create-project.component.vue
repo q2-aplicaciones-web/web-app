@@ -47,7 +47,7 @@ const garmentColors = [
   { label: "dark-yellow", value: "#F2AB00" } // row 3, col 3
 ];
 
-const garmentColorImages = "https://res.cloudinary.com/dkkfv72vo/image/upload/v1747000549/Frame_530_hfhrko.webp";
+const garmentColorImages = import.meta.env.VITE_GARMENT_COLOR_IMAGE_URL;
 function getGarmentColorPosition(label) {
   const idx = garmentColors.findIndex(
     (c) => c.label === label || c.value === label
