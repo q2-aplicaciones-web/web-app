@@ -12,15 +12,15 @@ const router = useRouter();
 const toast = useToast();
 
 const name = ref("");
-const genre = ref("men");
+const genre = ref("MEN");
 const garmentColor = ref("#161615");
 const garmentSize = ref("M");
 const loading = ref(false);
 
 const genres = [
-  { label: "Men", value: "men" },
-  { label: "Women", value: "women" },
-  { label: "Unisex", value: "unisex" },
+  { label: "Men", value: "MEN" },
+  { label: "Women", value: "WOMEN" },
+  { label: "Unisex", value: "UNISEX" },
 ];
 const garmentSizes = [
   { label: "Small (S)", value: "S" },
