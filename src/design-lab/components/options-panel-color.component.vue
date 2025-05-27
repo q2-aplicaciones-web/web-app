@@ -88,13 +88,14 @@ function getColorName(label) {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    flex-grow: 1;
 }
 
 .color-section {
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    align-items: flex-start;
+    align-items: center;
 }
 
 .section-title {
@@ -115,14 +116,14 @@ function getColorName(label) {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    justify-content: flex-start;
-    align-items: flex-start;
+    justify-content: center;
+    align-items: center;
 }
 
 .color-row {
     display: flex;
     gap: 1.5rem;
-    justify-content: flex-start;
+    justify-content: center;
     align-items: center;
 }
 
@@ -149,6 +150,7 @@ function getColorName(label) {
     transform: scale(1.05);
 }
 
+/* Tablet breakpoint */
 @media (max-width: 768px) {
     .color-button {
         width: 50px;
