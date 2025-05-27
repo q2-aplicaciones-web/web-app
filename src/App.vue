@@ -5,9 +5,101 @@ import Button from "primevue/button";
 import Menu from "primevue/menu";
 import Toolbar from "primevue/toolbar";
 import { useRouter, useRoute } from "vue-router";
+import { ref, computed, provide, watch, nextTick, getCurrentInstance } from "vue";
 
 const router = useRouter();
 const route = useRoute();
+
+// Create a reactive title reference
+const dynamicTitle = ref(null);
+const isEditingTitle = ref(false);
+const editableTitle = ref('');
+const titleInput = ref(null);
+const updateProjectFunction = ref(null);
+
+// Provide the dynamic title so child components can update it
+provide('pageTitle', {
+  title: dynamicTitle,
+  setTitle: (newTitle) => {
+    dynamicTitle.value = newTitle;
+  },
+  setUpdateFunction: (updateFn) => {
+    updateProjectFunction.value = updateFn;
+  }
+});
+
+// Computed property for the displayed title
+const displayTitle = computed(() => {
+  return dynamicTitle.value || route.meta.title || 'Q2';
+});
+
+// Functions for title editing
+function startEditingTitle() {
+  // Only allow editing if we're on a project detail page, have a dynamic title, and it's actually a project name
+  if (route.name === 'project-detail' && dynamicTitle.value && dynamicTitle.value.trim()) {
+    isEditingTitle.value = true;
+    editableTitle.value = dynamicTitle.value;
+    // Focus the input field after the DOM updates
+    nextTick(() => {
+      if (titleInput.value) {
+        titleInput.value.focus();
+        titleInput.value.select();
+      }
+    });
+  }
+}
+
+function saveTitle() {
+  console.log('saveTitle called with:', editableTitle.value.trim());
+  if (editableTitle.value.trim() && route.name === 'project-detail') {
+    const newTitle = editableTitle.value.trim();
+    
+    // Only update if the title actually changed
+    if (newTitle !== dynamicTitle.value) {
+      console.log('Title changed from', dynamicTitle.value, 'to', newTitle);
+      dynamicTitle.value = newTitle;
+      // Update document title as well
+      document.title = `Q2 | ${newTitle}`;
+      
+      // Use the stored update function
+      if (updateProjectFunction.value) {
+        console.log('Calling updateProjectFunction with:', newTitle);
+        updateProjectFunction.value(newTitle);
+      } else {
+        console.log('No updateProjectFunction available');
+      }
+    } else {
+      console.log('Title unchanged, not saving');
+    }
+  } else {
+    console.log('Invalid conditions for saving:', {
+      hasTitle: !!editableTitle.value.trim(),
+      isProjectDetail: route.name === 'project-detail'
+    });
+  }
+  isEditingTitle.value = false;
+}
+
+function cancelEdit() {
+  isEditingTitle.value = false;
+  editableTitle.value = '';
+}
+
+function handleTitleKeydown(event) {
+  if (event.key === 'Enter') {
+    saveTitle();
+  } else if (event.key === 'Escape') {
+    cancelEdit();
+  }
+}
+
+// Watch for route changes to reset dynamic title when navigating away
+watch(route, (newRoute) => {
+  // Reset dynamic title when route changes, unless it's the same route with different params
+  if (newRoute.name !== 'project-detail') {
+    dynamicTitle.value = null;
+  }
+}, { immediate: true });
 
 const items = [
     {
@@ -65,10 +157,29 @@ const items = [
 <template>
     <Toast />
     <main>
-        <section class="content">
-            <Toolbar>
-                <template #start>
-                    <h2>{{ route.meta.title }}</h2>
+        <section class="content">            <Toolbar>
+                <template #start>                    <div class="title-container">
+                        <h2 
+                            v-if="!isEditingTitle" 
+                            @dblclick="startEditingTitle"
+                            :class="{ 
+                                'editable-title': route.name === 'project-detail' && dynamicTitle && dynamicTitle.trim(),
+                                'non-editable': !(route.name === 'project-detail' && dynamicTitle && dynamicTitle.trim())
+                            }"
+                            :title="route.name === 'project-detail' && dynamicTitle && dynamicTitle.trim() ? 'Double-click to edit project name' : ''"
+                        >
+                            {{ displayTitle }}
+                        </h2>
+                        <input
+                            v-if="isEditingTitle"
+                            v-model="editableTitle"
+                            @keydown="handleTitleKeydown"
+                            @blur="saveTitle"
+                            class="title-input"
+                            ref="titleInput"
+                            type="text"
+                        />
+                    </div>
                 </template>
                 <template #end>
                     <div class="user-menu">
@@ -136,6 +247,39 @@ main {
 .user-menu {
     display: flex;
     gap: 1rem;
+}
+
+.title-container {
+    display: flex;
+    align-items: center;
+}
+
+.editable-title {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.editable-title:hover {
+    background-color: var(--surface-100);
+}
+
+.non-editable {
+    cursor: default;
+}
+
+.title-input {
+    font-size: 1.5rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border: 2px solid var(--primary-color);
+    border-radius: 4px;
+    background: transparent; /* Transparent background */
+    outline: none;
+    font-family: inherit;
+    margin: 0;
+    color: inherit; /* Inherit text color from parent */
 }
 
 :deep(.p-menu),

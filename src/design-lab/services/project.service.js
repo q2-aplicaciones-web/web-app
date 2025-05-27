@@ -34,13 +34,16 @@ export class ProjectService {
         } catch (error) {
             this.handleError(error);
         }
-    }
-
-    async updateProject(id, data) {
+    }    async updateProject(id, data) {
         try {
+            console.log('ProjectService.updateProject called with:', { id, data });
             ProjectSchema.parse(data);
-            return await http.put(`/projects/${id}`, data);
+            console.log('Schema validation passed, making HTTP request...');
+            const response = await http.put(`/projects/${id}`, data);
+            console.log('HTTP response:', response);
+            return response;
         } catch (error) {
+            console.error('Error in updateProject:', error);
             this.handleError(error);
         }
     }

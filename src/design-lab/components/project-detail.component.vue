@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from "vue";
-import { useRoute } from "vue-router";
+import { ref, onMounted, onBeforeUnmount, inject } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { ProjectService } from "../services/project.service.js";
 import Card from "primevue/card";
 import Toolbar from "primevue/toolbar";
@@ -10,6 +10,7 @@ import OptionsPanelText from "../../design-lab/components/options-panel-text.com
 import OptionsPanelImage from "../../design-lab/components/options-panel-image.component.vue";
 
 const route = useRoute();
+const router = useRouter();
 const project = ref(null);
 const loading = ref(true);
 const error = ref(null);
@@ -24,6 +25,62 @@ const contextMenu = ref({
     layerId: null,
     layerType: null
 });
+
+// Inject the page title functionality
+const pageTitle = inject('pageTitle');
+
+// Function to update project name in the backend
+async function updateProjectName(newName) {
+    try {
+        if (project.value && project.value.id) {
+            console.log('Current project data:', project.value);
+            
+            // Create updated project data with the proper JSON server format (camelCase)
+            const updatedProject = {
+                id: project.value.id,
+                userId: project.value.userId,
+                createdAt: project.value.createdAt,
+                status: project.value.status,
+                previewImageUrl: project.value.previewImageUrl || "",
+                name: newName, // Update the name
+                garmentColor: project.value.garmentColor,
+                garmentSize: project.value.garmentSize,
+                lastModified: new Date().toISOString(), // Update timestamp
+                genre: project.value.genre,
+                canvas: project.value.canvas
+            };
+            
+            console.log('Updating project with data:', updatedProject);
+            
+            // Call the service to update the project using fetch
+            const response = await fetch(`http://localhost:3000/projects/${project.value.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedProject)
+            });
+            
+            if (response.ok) {
+                const updatedData = await response.json();
+                console.log('Update response:', updatedData);
+                
+                // Update local project data
+                project.value.name = newName;
+                project.value.lastModified = updatedProject.lastModified;
+                
+                console.log('Project name updated successfully to:', newName);
+            } else {
+                const errorText = await response.text();
+                console.error('HTTP Error:', response.status, response.statusText, errorText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+        }
+    } catch (error) {
+        console.error('Error updating project name:', error);
+        // You could show a toast notification here if needed
+    }
+}
 
 const garmentColorImages = import.meta.env.VITE_GARMENT_COLOR_IMAGE_URL;
 const garmentColors = [
@@ -60,7 +117,14 @@ onMounted(async () => {
         const response = await new ProjectService().getProjectById(
             route.params.id
         );
-        project.value = response.data;
+        project.value = response.data;        // Update the page title using the injected function
+        if (project.value && project.value.name && pageTitle) {
+            pageTitle.setTitle(project.value.name);
+            // Provide the update function to the parent
+            pageTitle.setUpdateFunction(updateProjectName);
+            // Update the document title
+            document.title = `Q2 | ${project.value.name}`;
+        }
         
         // If the project has a canvas with layers, initialize them
         if (project.value && project.value.canvas && project.value.canvas.layers) {
@@ -434,15 +498,9 @@ function deleteLayerFromContext() {
                             v-else-if="selectedOption === 'image'"
                             @add-layer="addLayer"
                         />
-                    </div>
-                </div>
+                    </div>                </div>
             </template>
-            <template #title>
-                {{ project.name }}
-            </template>
-            <template #subtitle>
-                {{ project.genre }}
-            </template>            <p>Created: {{ new Date(project.createdAt).toLocaleString() }}</p>
+            <p>Created: {{ new Date(project.createdAt).toLocaleString() }}</p>
             <p>Status: {{ project.status }}</p>
         </Card>
           <!-- Context Menu for Layers -->
@@ -466,7 +524,7 @@ function deleteLayerFromContext() {
 <style scoped>
 .project-detail {
     flex: 1;
-    padding: 2rem;
+    padding: 1.5rem;
     display: flex;
     justify-content: center;
     align-items: flex-start;
@@ -474,7 +532,8 @@ function deleteLayerFromContext() {
 
 .project-card {
     width: 100%;
-    max-width: 1200px;    min-height: 800px;
+    max-width: 1100px;
+    min-height: 500px;
 }
 .garment-color-swatch {
     background-repeat: no-repeat;
@@ -487,12 +546,12 @@ function deleteLayerFromContext() {
     display: flex;
     flex-direction: row;
     gap: 1rem;
-    margin-top: 1rem;
-    padding: 1rem;
-    min-height: 650px;
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    min-height: 400px;
 }
 .main-image-panel {
-    width: 620px; /* Fixed width to lock the image position */
+    width: 620px; /* Back to original size */
     min-width: 620px; /* Prevent shrinking */
     display: flex;
     justify-content: flex-start;
@@ -502,8 +561,11 @@ function deleteLayerFromContext() {
 .main-options-panel {
     flex: 1; /* Take remaining space */
     min-width: 220px;
-    max-width: 400px;
-    min-height: 580px;
+    max-width: 1200px;
+    min-height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 @media (max-width: 992px) {

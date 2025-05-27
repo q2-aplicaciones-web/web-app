@@ -88,6 +88,7 @@ function getColorName(label) {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    flex-grow: 1;
 }
 
 .color-section {
