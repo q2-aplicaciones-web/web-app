@@ -30,8 +30,8 @@ const garmentSizes = [
 ];
 const garmentColors = [
   { label: "black", value: "#161615" },      // row 0, col 0
-  { label: "gray", value: "#403D3B" },      // row 0, col 1
-  { label: "light-gray", value: "#B3B1AF" },// row 0, col 2
+  { label: "grey", value: "#403D3B" },      // row 0, col 1
+  { label: "light-grey", value: "#B3B1AF" },// row 0, col 2
   { label: "white", value: "#EDEDED" },     // row 0, col 3
   { label: "red", value: "#B51B14" },       // row 1, col 0
   { label: "pink", value: "#F459B0" },      // row 1, col 1
@@ -42,9 +42,9 @@ const garmentColors = [
   { label: "sky-blue", value: "#3F9BDC" },  // row 2, col 2
   { label: "blue", value: "#1B3D92" },      // row 2, col 3
   { label: "green", value: "#1B8937" },     // row 3, col 0
-  { label: "light-green", value: "#5BBE65" },// row 3, col 1
+  { label: "lime", value: "#5BBE65" },// row 3, col 1
   { label: "yellow", value: "#FECD08" },    // row 3, col 2
-  { label: "dark-yellow", value: "#F2AB00" } // row 3, col 3
+  { label: "mustard", value: "#F2AB00" } // row 3, col 3
 ];
 
 const garmentColorImages = import.meta.env.VITE_GARMENT_COLOR_IMAGE_URL;
@@ -55,7 +55,7 @@ function getGarmentColorPosition(label) {
   if (idx === -1) return "0px 0px";
   const col = idx % 4;
   const row = Math.floor(idx / 4);
-  return `-${col * 300}px -${row * 300}px`;
+  return `-${col * 400}px -${row * 400}px`;
 }
 
 async function createProject() {
@@ -117,7 +117,6 @@ async function createProject() {
 <template>
   <section class="create-project-page">
     <Card class="create-project-card">
-      <template #title>New Project</template>
       <template #content>
         <div class="form-content">
           <div class="preview-panel">
@@ -126,9 +125,9 @@ async function createProject() {
               :style="{
                 backgroundImage: `url(${garmentColorImages})`,
                 backgroundPosition: getGarmentColorPosition(garmentColor),
-                width: '300px',
-                height: '300px',
-                backgroundSize: '1200px 1200px',
+                width: '400px',
+                height: '400px',
+                backgroundSize: '1600px 1600px',
                 borderRadius: '16px',
                 border: '2px solid #eee',
                 boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
@@ -189,13 +188,24 @@ async function createProject() {
 .create-project-page {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
+  min-height: 90vh;
   padding: 2rem;
 }
 .create-project-card {
   min-width: 700px;
   max-width: 900px;
   width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .create-project-page {
+    padding: 1rem;
+  }
+  .create-project-card {
+    min-width: auto;
+  }
 }
 .form-content {
   display: flex;
@@ -206,10 +216,24 @@ async function createProject() {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  min-width: 300px;
+  min-width: 400px;
 }
 .form-panel {
   flex: 1;
+}
+
+@media (max-width: 768px) {
+  .form-content {
+    flex-direction: column;
+    align-items: center;
+  }
+  .preview-panel {
+    order: -1; /* This makes the preview panel appear first */
+    margin-bottom: 2rem;
+  }
+  .form-panel {
+    width: 100%;
+  }
 }
 .garment-preview {
   background-repeat: no-repeat;

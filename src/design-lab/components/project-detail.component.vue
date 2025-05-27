@@ -19,8 +19,8 @@ const layers = ref([]);
 const garmentColorImages = import.meta.env.VITE_GARMENT_COLOR_IMAGE_URL;
 const garmentColors = [
     { label: "black", value: "#161615" },      // row 0, col 0
-    { label: "gray", value: "#403D3B" },      // row 0, col 1
-    { label: "light-gray", value: "#B3B1AF" },// row 0, col 2
+    { label: "grey", value: "#403D3B" },      // row 0, col 1
+    { label: "light-grey", value: "#B3B1AF" },// row 0, col 2
     { label: "white", value: "#EDEDED" },     // row 0, col 3
     { label: "red", value: "#B51B14" },       // row 1, col 0
     { label: "pink", value: "#F459B0" },      // row 1, col 1
@@ -31,9 +31,9 @@ const garmentColors = [
     { label: "sky-blue", value: "#3F9BDC" },  // row 2, col 2
     { label: "blue", value: "#1B3D92" },      // row 2, col 3
     { label: "green", value: "#1B8937" },     // row 3, col 0
-    { label: "light-green", value: "#5BBE65" },// row 3, col 1
+    { label: "lime", value: "#5BBE65" },// row 3, col 1
     { label: "yellow", value: "#FECD08" },    // row 3, col 2
-    { label: "dark-yellow", value: "#F2AB00" } // row 3, col 3
+    { label: "mustard", value: "#F2AB00" } // row 3, col 3
 ];
 
 function getGarmentColorPosition(label) {
@@ -43,7 +43,7 @@ function getGarmentColorPosition(label) {
     if (idx === -1) return "0px 0px";
     const col = idx % 4;
     const row = Math.floor(idx / 4);
-    return `-${col * 300}px -${row * 300}px`;
+    return `-${col * 600}px -${row * 600}px`;
 }
 
 onMounted(async () => {
@@ -147,22 +147,23 @@ function onGarmentColorChange(val) {
                 <Toolbar>
                     <template #start>
                         <Button
-                            label="Change Color"
+                            label="Color"
                             icon="pi pi-palette"
-                            class="mr-2"
+                            class="mr-2 toolbar-btn"
                             :outlined="selectedOption !== 'color'"
                             @click="selectedOption = 'color'"
                         />
                         <Button
                             label="Add Text"
                             icon="pi pi-font"
-                            class="mr-2"
+                            class="mr-2 toolbar-btn"
                             :outlined="selectedOption !== 'text'"
                             @click="selectedOption = 'text'"
                         />
                         <Button
                             label="Add Image"
                             icon="pi pi-image"
+                            class="toolbar-btn"
                             :outlined="selectedOption !== 'image'"
                             @click="selectedOption = 'image'"
                         />
@@ -177,9 +178,9 @@ function onGarmentColorChange(val) {
                                 backgroundImage: `url(${garmentColorImages})`,                                backgroundPosition: getGarmentColorPosition(
                                     project.garmentColor
                                 ),
-                                width: '300px',
-                                height: '300px',
-                                backgroundSize: '1200px 1200px',
+                                width: '600px',
+                                height: '600px',
+                                backgroundSize: '2400px 2400px',
                                 borderRadius: '16px',
                                 border: '2px solid #eee',
                                 margin: '1rem auto 0',
@@ -318,10 +319,43 @@ function onGarmentColorChange(val) {
     display: flex;
     justify-content: center;
     align-items: flex-start;
+    overflow-x: auto; /* Allow horizontal scrolling if needed */
 }
 .main-options-panel {
     min-width: 220px;
     max-width: 320px;
+}
+
+@media (max-width: 992px) {
+    .main-content-row {
+        flex-direction: column;
+        align-items: center;
+    }
+    .main-image-panel {
+        margin-bottom: 2rem;
+        width: 100%;
+        overflow-x: auto;
+    }
+    .main-options-panel {
+        width: 100%;
+        max-width: 600px;
+    }
+}
+
+@media (max-width: 768px) {
+    .garment-color-swatch.tshirt-image {
+        width: 450px !important;
+        height: 450px !important;
+        background-size: 1800px 1800px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .garment-color-swatch.tshirt-image {
+        width: 320px !important;
+        height: 320px !important;
+        background-size: 1280px 1280px !important;
+    }
 }
 .tshirt-image {
     position: relative;
@@ -329,6 +363,8 @@ function onGarmentColorChange(val) {
     display: flex;
     align-items: center;
     justify-content: center;
+    max-width: 100%;
+    height: auto;
 }
 .tshirt-outline {
     position: absolute;
@@ -375,5 +411,11 @@ function onGarmentColorChange(val) {
 }
 .image-layer img {
     pointer-events: none;
+}
+.toolbar-btn {
+    min-width: 140px;
+    width: 140px;
+    justify-content: center;
+    margin-right: 0.5rem;
 }
 </style>
