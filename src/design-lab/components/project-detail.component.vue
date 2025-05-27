@@ -15,6 +15,15 @@ const loading = ref(true);
 const error = ref(null);
 const selectedOption = ref("color");
 const layers = ref([]);
+const hoveredLayerId = ref(null);
+const selectedLayerId = ref(null);
+const contextMenu = ref({
+    visible: false,
+    x: 0,
+    y: 0,
+    layerId: null,
+    layerType: null
+});
 
 const garmentColorImages = import.meta.env.VITE_GARMENT_COLOR_IMAGE_URL;
 const garmentColors = [
@@ -74,16 +83,13 @@ onMounted(async () => {
                         hovered: false,
                         offsetX: 0,
                         offsetY: 0
-                    };
-                } else if (layer.type === 'image' && layer.content) {
+                    };                } else if (layer.type === 'image' && layer.content) {
                     return {
                         id: layer.id,
                         type: 'image',
                         imageUrl: layer.content.imageUrl,
                         width: layer.content.width || 200,
                         height: layer.content.height || 200,
-                        scale: layer.content.scale || 1,
-                        maintainAspectRatio: layer.content.maintainAspectRatio || true,
                         x: layer.content.x || 100,
                         y: layer.content.y || 150,
                         dragging: false,
@@ -94,12 +100,14 @@ onMounted(async () => {
                 }
                 return null;
             }).filter(layer => layer !== null);
-        }
-    } catch (err) {
+        }    } catch (err) {
         error.value = err;
     } finally {
         loading.value = false;
     }
+    
+    // Add global click listener to hide context menu
+    window.addEventListener("click", hideContextMenu);
 });
 
 function addLayer(newLayer) {
@@ -111,7 +119,24 @@ function deleteLayer(id) {
 }
 
 let currentDragLayer = null;
+let currentResizeLayer = null;
+let resizeDirection = '';
+
 function startDrag(layer, event) {
+    // If clicking on a resize handle, don't start drag
+    if (event.target.classList.contains('resize-handle')) {
+        return;
+    }
+    
+    // Don't start drag if we're currently resizing
+    if (currentResizeLayer) {
+        return;
+    }
+    
+    if (layer.type === 'image') {
+        selectedLayerId.value = layer.id;
+    }
+    
     currentDragLayer = layer;
     layer.dragging = true;
     layer.offsetX = event.clientX - layer.x;
@@ -119,8 +144,85 @@ function startDrag(layer, event) {
     window.addEventListener("mousemove", onDragMove);
     window.addEventListener("mouseup", stopDrag, { once: true });
 }
+
+function startResize(layer, direction, event) {
+    event.stopPropagation();
+    event.preventDefault();
+    
+    // Make sure we don't start dragging while resizing
+    if (currentDragLayer) {
+        stopDrag();
+    }
+    
+    currentResizeLayer = layer;
+    resizeDirection = direction;
+    layer.resizing = true;
+    selectedLayerId.value = layer.id; // Ensure the layer is selected when resizing
+    
+    // Store initial values
+    layer.initialWidth = layer.width;
+    layer.initialHeight = layer.height;
+    layer.initialX = layer.x;
+    layer.initialY = layer.y;
+    layer.startMouseX = event.clientX;
+    layer.startMouseY = event.clientY;
+    
+    window.addEventListener("mousemove", onResizeMove);
+    window.addEventListener("mouseup", stopResize, { once: true });
+}
+
+function onResizeMove(event) {
+    if (!currentResizeLayer || !currentResizeLayer.resizing) return;
+    
+    const layer = currentResizeLayer;
+    const deltaX = event.clientX - layer.startMouseX;
+    const deltaY = event.clientY - layer.startMouseY;
+    
+    switch (resizeDirection) {
+        case 'se': // bottom-right
+            layer.width = Math.max(20, layer.initialWidth + deltaX);
+            layer.height = Math.max(20, layer.initialHeight + deltaY);
+            break;
+        case 'sw': // bottom-left
+            const newWidth = Math.max(20, layer.initialWidth - deltaX);
+            layer.width = newWidth;
+            layer.height = Math.max(20, layer.initialHeight + deltaY);
+            layer.x = layer.initialX + (layer.initialWidth - newWidth);
+            break;
+        case 'ne': // top-right
+            layer.width = Math.max(20, layer.initialWidth + deltaX);
+            const newHeight = Math.max(20, layer.initialHeight - deltaY);
+            layer.height = newHeight;
+            layer.y = layer.initialY + (layer.initialHeight - newHeight);
+            break;
+        case 'nw': // top-left
+            const newW = Math.max(20, layer.initialWidth - deltaX);
+            const newH = Math.max(20, layer.initialHeight - deltaY);
+            layer.width = newW;
+            layer.height = newH;
+            layer.x = layer.initialX + (layer.initialWidth - newW);
+            layer.y = layer.initialY + (layer.initialHeight - newH);
+            break;
+    }
+}
+
+function stopResize() {
+    if (currentResizeLayer) {
+        currentResizeLayer.resizing = false;
+        // Clean up temporary properties
+        delete currentResizeLayer.initialWidth;
+        delete currentResizeLayer.initialHeight;
+        delete currentResizeLayer.initialX;
+        delete currentResizeLayer.initialY;
+        delete currentResizeLayer.startMouseX;
+        delete currentResizeLayer.startMouseY;
+    }
+    window.removeEventListener("mousemove", onResizeMove);
+    currentResizeLayer = null;
+    resizeDirection = '';
+}
 function onDragMove(event) {
-    if (!currentDragLayer || !currentDragLayer.dragging) return;
+    if (!currentDragLayer || !currentDragLayer.dragging || currentDragLayer.resizing) return;
     currentDragLayer.x = event.clientX - currentDragLayer.offsetX;
     currentDragLayer.y = event.clientY - currentDragLayer.offsetY;
 }
@@ -131,18 +233,77 @@ function stopDrag() {
 }
 onBeforeUnmount(() => {
     window.removeEventListener("mousemove", onDragMove);
+    window.removeEventListener("mousemove", onResizeMove);
+    window.removeEventListener("click", hideContextMenu);
 });
 
 function onGarmentColorChange(val) {
     if (project.value) project.value.garmentColor = val;
 }
+
+function onCanvasClick(event) {
+    // Only deselect if we're clicking on the canvas background, not on a layer
+    if (event.target.classList.contains('tshirt-image') || 
+        event.target.classList.contains('garment-color-swatch')) {
+        selectedLayerId.value = null;
+    }
+}
+
+function onImageLayerClick(layer, event) {
+    // Only handle selection if not clicking on resize handle
+    if (!event.target.classList.contains('resize-handle')) {
+        selectedLayerId.value = layer.id;
+        event.stopPropagation(); // Prevent canvas click from deselecting
+    }
+}
+
+function onTextRightClick(layer, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Show context menu at mouse position
+    contextMenu.value = {
+        visible: true,
+        x: event.clientX,
+        y: event.clientY,
+        layerId: layer.id,
+        layerType: 'text'
+    };
+}
+
+function onImageRightClick(layer, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Show context menu at mouse position
+    contextMenu.value = {
+        visible: true,
+        x: event.clientX,
+        y: event.clientY,
+        layerId: layer.id,
+        layerType: 'image'
+    };
+    
+    // Select the image when right-clicking
+    selectedLayerId.value = layer.id;
+}
+
+function hideContextMenu() {
+    contextMenu.value.visible = false;
+}
+
+function deleteLayerFromContext() {
+    if (contextMenu.value.layerId) {
+        deleteLayer(contextMenu.value.layerId);
+        hideContextMenu();
+    }
+}
 </script>
 
-<template>
-    <section class="project-detail">
+<template>    <section class="project-detail">
         <div v-if="loading">Loading...</div>
         <div v-else-if="error">Error: {{ error.message }}</div>
-        <Card v-if="project">
+        <Card v-if="project" class="project-card">
             <template #header>
                 <Toolbar>
                     <template #start>
@@ -168,14 +329,14 @@ function onGarmentColorChange(val) {
                             @click="selectedOption = 'image'"
                         />
                     </template>
-                </Toolbar>
-                <div class="main-content-row">
-                    <div class="main-image-panel">
-                        <div
+                </Toolbar>                <div class="main-content-row">
+                    <div class="main-image-panel">                        <div
                             v-if="project.garmentColor"
                             class="garment-color-swatch tshirt-image"
+                            @click="onCanvasClick"
                             :style="{
-                                backgroundImage: `url(${garmentColorImages})`,                                backgroundPosition: getGarmentColorPosition(
+                                backgroundImage: `url(${garmentColorImages})`,
+                                backgroundPosition: getGarmentColorPosition(
                                     project.garmentColor
                                 ),
                                 width: '600px',
@@ -183,17 +344,17 @@ function onGarmentColorChange(val) {
                                 backgroundSize: '2400px 2400px',
                                 borderRadius: '16px',
                                 border: '2px solid #eee',
-                                margin: '1rem auto 0',
+                                margin: '0', /* Remove auto margin to keep it fixed */
                                 boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
                             }"
                         >
                             <div
                                 v-for="layer in layers"
                                 :key="layer.id"
-                                class="draggable-text-layer"
-                                :class="{
+                                class="draggable-text-layer"                                :class="{
                                     dragging: layer.dragging,
                                     'image-layer': layer.type === 'image',
+                                    'selected': layer.type === 'image' && selectedLayerId === layer.id,
                                 }"
                                 :style="{
                                     left: layer.x + 'px',
@@ -211,47 +372,50 @@ function onGarmentColorChange(val) {
                                         ? 'underline'
                                         : 'none',
                                     position: 'absolute',
-                                    zIndex: 10,
-                                    width:
+                                    zIndex: layer.type === 'image' && selectedLayerId === layer.id ? 50 : 10,                                    width:
                                         layer.type === 'image'
-                                            ? layer.width * (layer.scale || 1) +
-                                              'px'
+                                            ? layer.width + 'px'
                                             : undefined,
                                     height:
                                         layer.type === 'image'
-                                            ? layer.height *
-                                                  (layer.scale || 1) +
-                                              'px'
-                                            : undefined,
-                                }"
-                                @mousedown="(e) => startDrag(layer, e)"
-                                @mouseenter="layer.hovered = true"
-                                @mouseleave="layer.hovered = false"
-                            >
-                                <template v-if="layer.type === 'image'">
+                                            ? layer.height + 'px'
+                                            : undefined,                                }"                                @mousedown="(e) => startDrag(layer, e)"
+                                @click="layer.type === 'image' ? onImageLayerClick(layer, $event) : null"
+                                @contextmenu="layer.type === 'image' ? onImageRightClick(layer, $event) : onTextRightClick(layer, $event)"
+                                @mouseenter="hoveredLayerId = layer.id"
+                                @mouseleave="hoveredLayerId = null"
+                            ><template v-if="layer.type === 'image'">
                                     <img
                                         :src="layer.imageUrl"
                                         :style="{
                                             width: '100%',
                                             height: '100%',
-                                            objectFit: 'contain',
+                                            objectFit: 'fill',
                                             borderRadius: '4px',
                                         }"
                                     />
-                                </template>
-                                <template v-else>
+                                </template>                                <template v-else>
                                     <span>{{ layer.text }}</span>
                                 </template>
-                                <Button
-                                    v-if="layer.hovered"
-                                    icon="pi pi-times"
-                                    class="delete-layer-btn"
-                                    @click.stop="deleteLayer(layer.id)"
-                                    rounded
-                                    text
-                                    severity="danger"
-                                    aria-label="Delete Layer"
-                                />
+                                
+                                <!-- Resize handles for selected images -->
+                                <template v-if="layer.type === 'image' && selectedLayerId === layer.id">
+                                    <div
+                                        class="resize-handle resize-nw"
+                                        @mousedown="(e) => startResize(layer, 'nw', e)"
+                                    ></div>
+                                    <div
+                                        class="resize-handle resize-ne"
+                                        @mousedown="(e) => startResize(layer, 'ne', e)"
+                                    ></div>
+                                    <div
+                                        class="resize-handle resize-sw"
+                                        @mousedown="(e) => startResize(layer, 'sw', e)"
+                                    ></div>
+                                    <div
+                                        class="resize-handle resize-se"
+                                        @mousedown="(e) => startResize(layer, 'se', e)"                                    ></div>
+                                </template>
                             </div>
                         </div>
                     </div>
@@ -278,10 +442,24 @@ function onGarmentColorChange(val) {
             </template>
             <template #subtitle>
                 {{ project.genre }}
-            </template>
-            <p>Created: {{ new Date(project.createdAt).toLocaleString() }}</p>
+            </template>            <p>Created: {{ new Date(project.createdAt).toLocaleString() }}</p>
             <p>Status: {{ project.status }}</p>
         </Card>
+          <!-- Context Menu for Layers -->
+        <div 
+            v-if="contextMenu.visible"
+            class="context-menu"
+            :style="{
+                left: contextMenu.x + 'px',
+                top: contextMenu.y + 'px'
+            }"
+            @click.stop
+        >
+            <div class="context-menu-item" @click="deleteLayerFromContext">
+                <i class="pi pi-trash"></i>
+                <span>{{ contextMenu.layerType === 'image' ? 'Delete Image' : 'Delete Text' }}</span>
+            </div>
+        </div>
     </section>
 </template>
 
@@ -293,12 +471,10 @@ function onGarmentColorChange(val) {
     justify-content: center;
     align-items: flex-start;
 }
-.project-image {
+
+.project-card {
     width: 100%;
-    height: 180px;
-    object-fit: cover;
-    border-radius: 4px 4px 0 0;
-    background: #f4f4f4;
+    max-width: 1200px;    min-height: 800px;
 }
 .garment-color-swatch {
     background-repeat: no-repeat;
@@ -310,35 +486,47 @@ function onGarmentColorChange(val) {
 .main-content-row {
     display: flex;
     flex-direction: row;
-    gap: 2rem;
+    gap: 1rem;
     margin-top: 1rem;
     padding: 1rem;
+    min-height: 650px;
 }
 .main-image-panel {
-    flex: 1;
+    width: 620px; /* Fixed width to lock the image position */
+    min-width: 620px; /* Prevent shrinking */
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: flex-start;
-    overflow-x: auto; /* Allow horizontal scrolling if needed */
+    margin-left: 0.5rem; /* Small margin to position close to left edge */
 }
 .main-options-panel {
+    flex: 1; /* Take remaining space */
     min-width: 220px;
-    max-width: 320px;
+    max-width: 400px;
+    min-height: 580px;
 }
 
 @media (max-width: 992px) {
     .main-content-row {
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start; /* Align to start instead of center */
+        min-height: auto;
+        gap: 1rem;
     }
     .main-image-panel {
-        margin-bottom: 2rem;
         width: 100%;
-        overflow-x: auto;
+        min-width: auto;
+        margin-left: 0;
+        margin-bottom: 1rem;
+        justify-content: center; /* Center on mobile */
     }
     .main-options-panel {
         width: 100%;
         max-width: 600px;
+        min-height: 400px;
+    }
+    .project-card {
+        min-height: auto;
     }
 }
 
@@ -365,16 +553,10 @@ function onGarmentColorChange(val) {
     justify-content: center;
     max-width: 100%;
     height: auto;
-}
-.tshirt-outline {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 2;
-    opacity: 0.7;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 .draggable-text-layer {
     cursor: grab;
@@ -389,12 +571,29 @@ function onGarmentColorChange(val) {
     align-items: center;
     position: absolute;
 }
+
+.draggable-text-layer.image-layer {
+    padding: 0; /* Remove padding for image layers */
+    background: transparent; /* Ensure no background */
+    border: none; /* Remove any border */
+    box-shadow: none; /* Remove shadow for cleaner look */
+}
+
+.draggable-text-layer.image-layer.selected {
+    border: 2px solid #007ad9; /* Blue border for selected images */
+    box-shadow: 0 0 0 1px rgba(0, 122, 217, 0.3); /* Soft glow */
+}
 .draggable-text-layer.dragging {
     cursor: grabbing;
 }
 .draggable-text-layer:hover {
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
     z-index: 20;
+}
+
+.draggable-text-layer.image-layer:hover {
+    box-shadow: 0 4px 16px rgba(0, 122, 217, 0.3); /* Blue shadow for image hover */
+    transform: scale(1.02); /* Slight scale on hover */
 }
 .delete-layer-btn {
     position: absolute;
@@ -408,6 +607,61 @@ function onGarmentColorChange(val) {
     display: flex;
     align-items: center;
     justify-content: center;
+    background-color: #dc3545 !important;
+    color: white !important;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.delete-layer-btn:hover {
+    background-color: #c82333 !important;
+    transform: scale(1.1);
+}
+
+.resize-handle {
+    position: absolute;
+    background-color: #007ad9;
+    border: 2px solid white;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    z-index: 100;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    user-select: none;
+    pointer-events: auto;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.resize-handle:hover {
+    background-color: #0056b3;
+    transform: scale(1.3);
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.resize-nw {
+    top: -6px;
+    left: -6px;
+    cursor: nw-resize;
+}
+
+.resize-ne {
+    top: -6px;
+    right: -6px;
+    cursor: ne-resize;
+}
+
+.resize-sw {
+    bottom: -6px;
+    left: -6px;
+    cursor: sw-resize;
+}
+
+.resize-se {
+    bottom: -6px;
+    right: -6px;
+    cursor: se-resize;
 }
 .image-layer img {
     pointer-events: none;
@@ -417,5 +671,38 @@ function onGarmentColorChange(val) {
     width: 140px;
     justify-content: center;
     margin-right: 0.5rem;
+}
+
+.context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    min-width: 140px;
+    padding: 4px 0;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    color: #dc3545;
+}
+
+.context-menu-item:hover {
+    background-color: #f5f5f5;
+}
+
+.context-menu-item i {
+    font-size: 14px;
+    width: 16px;
+    display: flex;
+    justify-content: center;
 }
 </style>
