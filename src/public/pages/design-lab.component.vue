@@ -152,14 +152,7 @@ li {
     width: 100%;
     height: 100%;
     background-repeat: no-repeat;
-    background-position: center;
-    transform: scale(0.9); /* Slightly scale down to ensure it fits nicely */
-}
-
-.project-name {
-    font-weight: bold;
-    font-size: 1.1rem;
-    text-align: center;
+    background-position: center;    transform: scale(0.9); /* Slightly scale down to ensure it fits nicely */
 }
 
 .card-link {

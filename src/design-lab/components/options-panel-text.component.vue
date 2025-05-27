@@ -1,13 +1,5 @@
 <script setup>
-import {
-    ref,
-    computed,
-    watch,
-    nextTick,
-    onMounted,
-    onBeforeUnmount,
-    defineEmits,
-} from "vue";
+import { ref } from "vue";
 import InputText from "primevue/inputtext";
 import Dropdown from "primevue/dropdown";
 import InputNumber from "primevue/inputnumber";
@@ -34,7 +26,6 @@ const fontFamilies = [
     { label: "Trebuchet MS", value: "Trebuchet MS" },
 ];
 
-const layers = ref([]);
 const emit = defineEmits(["add-layer"]);
 
 function createTextLayer() {
@@ -56,33 +47,6 @@ function createTextLayer() {
     };
     emit("add-layer", newLayer);
 }
-
-let currentDragLayer = null;
-
-function startDrag(layer, event) {
-    currentDragLayer = layer;
-    layer.dragging = true;
-    layer.offsetX = event.clientX - layer.x;
-    layer.offsetY = event.clientY - layer.y;
-    window.addEventListener("mousemove", onDragMove);
-    window.addEventListener("mouseup", stopDrag, { once: true });
-}
-
-function onDragMove(event) {
-    if (!currentDragLayer || !currentDragLayer.dragging) return;
-    currentDragLayer.x = event.clientX - currentDragLayer.offsetX;
-    currentDragLayer.y = event.clientY - currentDragLayer.offsetY;
-}
-
-function stopDrag() {
-    if (currentDragLayer) currentDragLayer.dragging = false;
-    window.removeEventListener("mousemove", onDragMove);
-    currentDragLayer = null;
-}
-
-onBeforeUnmount(() => {
-    window.removeEventListener("mousemove", onDragMove);
-});
 </script>
 
 <template>
@@ -142,6 +106,7 @@ onBeforeUnmount(() => {
 .options-panel {
     border-radius: 8px;
     min-width: 220px;
+    min-height: 580px;
 }
 .form-group {
     margin-bottom: 1rem;
@@ -153,67 +118,5 @@ onBeforeUnmount(() => {
     flex-direction: row;
     align-items: center;
     gap: 0.5rem;
-}
-.input {
-    padding: 0.4rem 0.6rem;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-size: 1rem;
-}
-.input-color {
-    width: 2.5rem;
-    height: 2.5rem;
-    border: none;
-    background: none;
-    padding: 0;
-}
-.style-btn {
-    border: 1px solid #ccc;
-    background: #fff;
-    border-radius: 4px;
-    padding: 0.2rem 0.6rem;
-    font-size: 1.1rem;
-    cursor: pointer;
-    margin-right: 0.2rem;
-}
-.style-btn.active {
-    background: #d0eaff;
-    border-color: #2196f3;
-}
-.add-btn {
-    margin-top: 1rem;
-    width: 100%;
-    background: #2196f3;
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    padding: 0.6rem;
-    font-size: 1rem;
-    cursor: pointer;
-}
-.add-btn:hover {
-    background: #1769aa;
-}
-.draggable-container {
-    position: relative;
-    width: 600px;
-    height: 600px;
-    margin: 2rem auto 0 auto;
-    background: #f4f4f4;
-    border-radius: 8px;
-    border: 2px dashed #e0e0e0;
-}
-.draggable-text-layer {
-    position: absolute;
-    cursor: move;
-    user-select: none;
-    padding: 0.2rem 0.5rem;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 4px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    transition: box-shadow 0.2s;
-}
-.draggable-text-layer:active {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
 }
 </style>
