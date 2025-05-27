@@ -170,6 +170,16 @@ const items = [
                         >
                             {{ displayTitle }}
                         </h2>
+                        <Button
+                            v-if="!isEditingTitle && route.name === 'project-detail' && dynamicTitle && dynamicTitle.trim()"
+                            icon="pi pi-pencil"
+                            @click="startEditingTitle"
+                            class="edit-title-btn"
+                            size="small"
+                            text
+                            rounded
+                            :title="'Edit project name'"
+                        />
                         <input
                             v-if="isEditingTitle"
                             v-model="editableTitle"
@@ -252,6 +262,21 @@ main {
 .title-container {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
+}
+
+.edit-title-btn {
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    margin-left: 0.25rem;
+}
+
+.edit-title-btn:hover {
+    opacity: 1;
+}
+
+.title-container:hover .edit-title-btn {
+    opacity: 0.8;
 }
 
 .editable-title {
