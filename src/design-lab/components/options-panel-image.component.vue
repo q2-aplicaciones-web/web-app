@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import Card from "primevue/card";
+import Button from "primevue/button";
 
 const emit = defineEmits(["add-layer"]);
 const imageUrl = ref("");
@@ -81,10 +82,10 @@ function addImageLayer() {
                     @change="onFileSelect" 
                     style="display: none;"
                 />
-                <button @click="$refs.fileInput.click()" class="custom-upload-button">
+                <Button @click="$refs.fileInput.click()" severity="success" class="w-full">
                     <i class="pi pi-upload"></i>
-                    <span>Upload Image</span>
-                </button>
+                    <span class="ml-2">Upload Image</span>
+                </Button>
             </div>
             <div v-if="imageUrl" class="image-preview">
                 <img :src="imageUrl" :style="{
@@ -115,33 +116,6 @@ function addImageLayer() {
 .upload-container {
     width: 100%;
     margin: 1rem 0;
-}
-
-.custom-upload-button {
-    width: 100%;
-    padding: 0.5rem 2rem;
-    font-size: 1rem;
-    min-height: 40px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #34d399;
-    color: rgb(34,24,27);
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-sizing: border-box;
-    span{
-        margin-left: 0.5rem;
-        font-weight: 400;
-    }
-}
-
-.custom-upload-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    background-color: #10b981;
 }
 
 .image-preview {
