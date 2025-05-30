@@ -211,7 +211,8 @@ const items = [
                             severity="secondary"
                             rounded
                             text
-                            aria-label="User"
+                            aria-label="Profile"
+                            @click="router.push('/profile')"
                         />
                     </div>
                 </template>

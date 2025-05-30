@@ -7,6 +7,8 @@ const DesignLabComponent = () =>
     import("../public/pages/design-lab.component.vue");
 const ProjectDetailComponent = () =>
     import("../design-lab/components/project-detail.component.vue");
+const ProfileComponent = () =>
+    import("../public/pages/profile.component.vue");
 
 const routes = [
     {
@@ -38,6 +40,12 @@ const routes = [
         name: "project-detail",
         component: ProjectDetailComponent,
         meta: { title: "Project Detail" },
+    },
+    {
+        path: "/profile",
+        name: "profile",
+        component: ProfileComponent,
+        meta: { title: "Profile" },
     },
     { path: "/", name: "default", redirect: "/home" },
 ];
