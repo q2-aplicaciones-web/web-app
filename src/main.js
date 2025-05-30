@@ -1,6 +1,6 @@
 import { createApp } from "vue";
 import "./style.css";
-import App from "./app.vue";
+import App from "./App.vue";
 import { PrimeVue } from "@primevue/core";
 import "primeflex/primeflex.css";
 import "primeicons/primeicons.css";
