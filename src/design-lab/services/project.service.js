@@ -26,7 +26,10 @@ export class ProjectService {
 
     static async getProjectById(id) {
         try {
-            return await http.get(`/projects/${id}`);
+            const response = await http.get(`/projects/${id}`);
+            // Transform the response using the assembler
+            const project = ProjectAssembler.toEntityFromResponse(response.data);
+            return { data: project };
         } catch (error) {
             console.error("Error fetching project by ID:", error);
             throw error;

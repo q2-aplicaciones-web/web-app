@@ -87,7 +87,7 @@ async function createProject() {
     };
     
     // Call the service to create the project
-    const response = await new ProjectService().createProject(data);
+    const response = await ProjectService.createProject(data);
     
     // Show success message
     toast.add({ 

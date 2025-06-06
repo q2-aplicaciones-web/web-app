@@ -39,7 +39,7 @@ onMounted(async () => {
 });
 
 async function loadProjects() {
-  const response = await new ProjectService().getProjects();
+  const response = await  ProjectService.getProjects();
   // Normalize project data to handle different naming conventions
   projects.value = response.data.map(normalizeProject);
 }

@@ -35,19 +35,41 @@ async function updateProjectName(newName) {
         if (project.value && project.value.id) {
             console.log('Current project data:', project.value);
             
-            // Create updated project data with the proper JSON server format (camelCase)
+            // Create updated project data with the proper JSON server format (snake_case)
             const updatedProject = {
                 id: project.value.id,
-                userId: project.value.userId,
-                createdAt: project.value.createdAt,
+                user_id: project.value.userId,
+                created_at: project.value.createdAt,
                 status: project.value.status,
-                previewImageUrl: project.value.previewImageUrl || "",
+                preview_image_url: project.value.previewImageUrl || "",
                 name: newName, // Update the name
-                garmentColor: project.value.garmentColor,
-                garmentSize: project.value.garmentSize,
-                lastModified: new Date().toISOString(), // Update timestamp
-                genre: project.value.genre,
-                canvas: project.value.canvas
+                garment_color: project.value.garmentColor,
+                garment_size: project.value.garmentSize,
+                last_modified: new Date().toISOString(), // Update timestamp
+                gender: project.value.gender,
+                layers: project.value.layers ? project.value.layers.map(layer => ({
+                    id: layer.id,
+                    project_id: project.value.id,
+                    type: layer.type,
+                    ...(layer.type === 'image' ? {
+                        image_url: layer.imageUrl,
+                        width: layer.width,
+                        height: layer.height
+                    } : {
+                        text_content: layer.textContent,
+                        font_size: layer.fontSize,
+                        font_color: layer.fontColor,
+                        font_family: layer.fontFamily,
+                        bold: layer.bold,
+                        italic: layer.italic,
+                        underline: layer.underline
+                    }),
+                    visible: layer.visible,
+                    opacity: layer.opacity,
+                    z_index: layer.zIndex,
+                    x: layer.x,
+                    y: layer.y
+                })) : []
             };
             
             console.log('Updating project with data:', updatedProject);
@@ -67,7 +89,7 @@ async function updateProjectName(newName) {
                 
                 // Update local project data
                 project.value.name = newName;
-                project.value.lastModified = updatedProject.lastModified;
+                project.value.lastModified = updatedProject.last_modified;
                 
                 console.log('Project name updated successfully to:', newName);
             } else {
@@ -114,7 +136,7 @@ function getGarmentColorPosition(label) {
 
 onMounted(async () => {
     try {
-        const response = await new ProjectService().getProjectById(
+        const response = await ProjectService.getProjectById(
             route.params.id
         );
         project.value = response.data;        // Update the page title using the injected function
@@ -126,36 +148,37 @@ onMounted(async () => {
             document.title = `Q2 | ${project.value.name}`;
         }
         
-        // If the project has a canvas with layers, initialize them
-        if (project.value && project.value.canvas && project.value.canvas.layers) {
-            layers.value = project.value.canvas.layers.map(layer => {
-                // Convert layer data to the format expected by the UI
-                if (layer.type === 'text' && layer.content) {
+        // If the project has layers, initialize them
+        if (project.value && project.value.layers) {
+            layers.value = project.value.layers.map(layer => {
+                // Convert layer entity to the format expected by the UI
+                if (layer.type === 'text') {
                     return {
                         id: layer.id,
                         type: 'text',
-                        text: layer.content.text,
-                        x: layer.content.x || 100,
-                        y: layer.content.y || 150,
-                        fontFamily: layer.content.fontFamily || 'Arial',
-                        fontSize: layer.content.fontSize || 24,
-                        color: layer.content.color || '#000000',
-                        bold: layer.content.bold || false,
-                        italic: layer.content.italic || false,
-                        underline: layer.content.underline || false,
+                        text: layer.textContent || layer.text_content || '',
+                        x: layer.x || 100,
+                        y: layer.y || 150,
+                        fontFamily: layer.fontFamily || layer.font_family || 'Arial',
+                        fontSize: layer.fontSize || layer.font_size || 24,
+                        color: layer.fontColor || layer.font_color || '#000000',
+                        bold: layer.bold || false,
+                        italic: layer.italic || false,
+                        underline: layer.underline || false,
                         dragging: false,
                         hovered: false,
                         offsetX: 0,
                         offsetY: 0
-                    };                } else if (layer.type === 'image' && layer.content) {
+                    };
+                } else if (layer.type === 'image') {
                     return {
                         id: layer.id,
                         type: 'image',
-                        imageUrl: layer.content.imageUrl,
-                        width: layer.content.width || 200,
-                        height: layer.content.height || 200,
-                        x: layer.content.x || 100,
-                        y: layer.content.y || 150,
+                        imageUrl: layer.imageUrl || layer.image_url || '',
+                        width: layer.width || 200,
+                        height: layer.height || 200,
+                        x: layer.x || 100,
+                        y: layer.y || 150,
                         dragging: false,
                         hovered: false,
                         offsetX: 0,
