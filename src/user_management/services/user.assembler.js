@@ -5,12 +5,12 @@ export class UserAssembler {
     static toEntityFromResponse(response) {
         const profile = ProfileAssembler.toEntityFromResponse(response.profile);
 
-        return new User(
-            response.id,
-            response.email,
-            response.token,
-            response.rol,
-            profile
-        );
+        return new User({
+            id: response.id,
+            email: response.email,
+            token: response.token,
+            rol: response.rol,
+            profile: profile
+        });
     }
 }

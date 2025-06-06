@@ -1,4 +1,3 @@
-
 export class Profile {
     _firstName;
     _lastName;
@@ -10,6 +9,22 @@ export class Profile {
         this._lastName = lastName;
         this._gender = gender;
         this._addresses = addresses;
+    }
+
+    get firstName() {
+        return this._firstName;
+    }
+
+    get lastName() {
+        return this._lastName;
+    }
+
+    get gender() {
+        return this._gender;
+    }
+
+    get addresses() {
+        return this._addresses;
     }
 
     getFullName() {

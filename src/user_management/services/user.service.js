@@ -10,17 +10,19 @@ const http = axios.create({
 });
 
 export class UserService {
-    _userId = env.defaultUserId;
+    static _userId = env.defaultUserId;
 
-    async getSessionUserId() {
+    static async getSessionUserId() {
         return this._userId;
     }
 
-    async getCurrentUser() {
+    static async getCurrentUser() {
         try {
             return http
                 .get(USER_WITH_PROFILE(this._userId))
-                .then((res) => UserAssembler.toEntityFromResponse(res.data));
+                .then((res) => {
+                    return UserAssembler.toEntityFromResponse(res.data[0])
+                });
         } catch (error) {
             console.error("Error in getCurrentUser:", error);
         }
