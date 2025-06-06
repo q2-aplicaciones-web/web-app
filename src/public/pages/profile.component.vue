@@ -5,6 +5,7 @@ import InputText from 'primevue/inputtext';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import UserInfo from '../../user_management/components/user-info.component.vue';
+import { UserService } from '../../user_management/services/user.service';
 
 const toast = useToast();
 
@@ -22,14 +23,9 @@ onMounted(async () => {
 
 async function loadUserProfile() {
   try {
-    // For demo purposes, create a mock user 
-    currentUser.value = {
-      id: "1",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      created_at: new Date().toISOString()
-    };
-    console.log('Using mock user data:', currentUser.value);
+    const user = await UserService.getCurrentUser();
+    console.log('Loaded user profile:', user);
+    currentUser.value = user;
   } catch (error) {
     console.error('Failed to load user profile:', error);
   }
