@@ -9,7 +9,7 @@ const http = axios.create({
 });
 
 export class ProjectService {
-    async getProjects() {
+    static async getProjects() {
         console.log("Fetching projects...");
         console.log(baseUrl);
         try {
@@ -19,15 +19,17 @@ export class ProjectService {
                     ProjectAssembler.toEntitiesFromResponse(response.data)
                 );
         } catch (error) {
-            this.handleError(error);
+            console.error("Error fetching projects:", error);
+            return [];
         }
     }
 
-    async getProjectById(id) {
+    static async getProjectById(id) {
         try {
             return await http.get(`/projects/${id}`);
         } catch (error) {
-            this.handleError(error);
+            console.error("Error fetching project by ID:", error);
+            throw error;
         }
     }
 

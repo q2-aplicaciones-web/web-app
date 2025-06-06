@@ -1,4 +1,5 @@
 import { DEFAULT_LAYER_STYLES } from "../../consts";
+import { ImageLayer, TextLayer } from "../model/layer.entity";
 
 
 export class LayerAssembler {

@@ -58,7 +58,6 @@
         }
     ],
 
-
     "projects": [
         {
             "id": "project-1",
@@ -158,7 +157,7 @@
         }
     ],
 
-    "garmentColors": [
+    "garment-colors": [
         {
             "label": "black",
             "value": "#161615",
@@ -240,7 +239,7 @@
             "id": "b24b"
         }
     ],
-    "garmentSizes": [
+    "garment-sizes": [
         {
             "label": "XS",
             "value": "XS",
@@ -272,7 +271,7 @@
             "id": "size-xxl"
         }
     ],
-    "projectStatus": [
+    "project-status": [
         {
             "label": "In Progress",
             "value": "in-progress",
@@ -289,7 +288,7 @@
             "id": "status-completed"
         }
     ],
-    "genders": [
+    "garment-gender": [
         {
             "label": "men",
             "value": "men",
@@ -451,7 +450,6 @@
             "total_amount": 118
         }
     ],
-
 
     "userWithProfile": [
         {
