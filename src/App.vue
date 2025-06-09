@@ -4,6 +4,7 @@ import Sidebar from "primevue/sidebar";
 import Button from "primevue/button";
 import Menu from "primevue/menu";
 import Toolbar from "primevue/toolbar";
+import Toast from "primevue/toast";
 import { useRouter, useRoute } from "vue-router";
 import { ref, computed, provide, watch, nextTick, getCurrentInstance } from "vue";
 
@@ -117,20 +118,6 @@ const items = [
         },
     },
     {
-        label: "Templates",
-        icon: "pi pi-clone",
-        command: () => {
-            router.push("/templates");
-        },
-    },
-    {
-        label: "Favorites",
-        icon: "pi pi-star",
-        command: () => {
-            router.push("/favorites");
-        },
-    },
-    {
         label: "Explore",
         icon: "pi pi-compass",
         command: () => {
@@ -138,17 +125,17 @@ const items = [
         },
     },
     {
-        label: "Projects",
-        icon: "pi pi-briefcase",
-        command: () => {
-            router.push("/projects");
-        },
-    },
-    {
         label: "Design Lab",
         icon: "pi pi-cog",
         command: () => {
             router.push("/design-lab");
+        },
+    },
+    {
+        label: "Settings",
+        icon: "pi pi-cog",
+        command: () => {
+            router.push("/settings");
         },
     },
 ];

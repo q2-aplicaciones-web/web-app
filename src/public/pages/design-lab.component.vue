@@ -58,13 +58,13 @@ onMounted(async () => {
         console.log("Projects response:", projectsResponse);
         projects.value = projectsResponse;
 
-        const garmentsColorsResponse = await DesignLabService.getGarmentColors();
-        console.log("Garments colors response:", garmentsColorsResponse.data);
-        garmentColors.value = garmentsColorsResponse.data;
+        const garmentsColorsResponse = await DesignLabService.getColors();
+        console.log("Garments colors response:", garmentsColorsResponse);
+        garmentColors.value = garmentsColorsResponse;
 
-        const garmentsSizesResponse = await DesignLabService.getGarmentSizes();
-        console.log("Garments sizes response:", garmentsSizesResponse.data);
-        garmentSizes.value = garmentsSizesResponse.data;
+        const garmentsSizesResponse = await DesignLabService.getSizes();
+        console.log("Garments sizes response:", garmentsSizesResponse);
+        garmentSizes.value = garmentsSizesResponse;
 
     } catch (err) {
         error.value = err;

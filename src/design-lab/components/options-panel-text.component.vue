@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue";
 import InputText from "primevue/inputtext";
-import Dropdown from "primevue/dropdown";
+import Select from "primevue/select";
 import InputNumber from "primevue/inputnumber";
 import ColorPicker from "primevue/colorpicker";
 import Button from "primevue/button";
@@ -59,7 +59,7 @@ function createTextLayer() {
             </div>
             <div class="form-group">
                 <label>Font Family</label>
-                <Dropdown
+                <Select
                     v-model="fontFamily"
                     :options="fontFamilies"
                     optionLabel="label"
