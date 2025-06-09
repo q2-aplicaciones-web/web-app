@@ -24,7 +24,7 @@ console.log("User Info Component Props:", props.user);
 const emit = defineEmits(["edit-profile"]);
 
 const displayName = computed(() => {
-    if (!props.user) return "Usuario no disponible";
+    if (!props.user) return "User not available";
     if (props.user.profile?.getFullName) {
         const fullName = props.user.profile.getFullName();
         if (fullName && fullName.trim()) {
@@ -39,21 +39,21 @@ const displayName = computed(() => {
         if (name) return name;
     }
 
-    return props.user.email || "Usuario";
+    return props.user.email || "User";
 });
 
 const fullName = computed(() => {
-    if (!props.user?.profile) return "No disponible";
+    if (!props.user?.profile) return "Not available";
 
     if (props.user.profile.getFullName) {
-        return props.user.profile.getFullName() || "No proporcionado";
+        return props.user.profile.getFullName() || "Not provided";
     }
 
     const firstName = props.user.profile.firstName || "";
     const lastName = props.user.profile.lastName || "";
     const name = `${firstName} ${lastName}`.trim();
 
-    return name || "No proporcionado";
+    return name || "Not provided";
 });
 
 const userInitials = computed(() => {
@@ -147,21 +147,21 @@ function handleEditProfile() {
             <template #content>
                 <div>
                     <Fieldset
-                        legend="Información del Usuario"
+                        legend="User Information"
                         :toggleable="true"
                     >
                         <template #legend>
                             <div>
                                 <i></i>
-                                <span>Información del Usuario</span>
+                                <span>User Information</span>
                             </div>
                         </template>
 
                         <div>
-                            <!-- Información Básica -->
+                            <!-- Basic Information -->
                             <div style="margin-bottom: 1rem;">
                                 <label style="font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">
-                                    Correo Electrónico
+                                    Email
                                 </label>
                                 <div>
                                     {{ user.email }}
@@ -170,7 +170,7 @@ function handleEditProfile() {
 
                             <div style="margin-bottom: 1rem;">
                                 <label style="font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">
-                                    ID de Usuario
+                                    User ID
                                 </label>
                                 <div>
                                     {{ user.id }}
@@ -179,7 +179,7 @@ function handleEditProfile() {
 
                             <div style="margin-bottom: 1rem;">
                                 <label style="font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">
-                                    Rol del Sistema
+                                    System Role
                                 </label>
                                 <div>
                                     <Badge
@@ -189,47 +189,47 @@ function handleEditProfile() {
                                 </div>
                             </div>
 
-                            <!-- Información del Perfil -->
+                            <!-- Profile Information -->
                             <div v-if="user.profile">
                                 <div style="margin-bottom: 1rem;">
                                     <label style="font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">
-                                        Nombre
+                                        First Name
                                     </label>
                                     <div>
                                         {{
                                             user.profile.firstName ||
-                                            "No proporcionado"
+                                            "Not provided"
                                         }}
                                     </div>
                                 </div>
 
                                 <div style="margin-bottom: 1rem;">
                                     <label style="font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">
-                                        Apellido
+                                        Last Name
                                     </label>
                                     <div>
                                         {{
                                             user.profile.lastName ||
-                                            "No proporcionado"
+                                            "Not provided"
                                         }}
                                     </div>
                                 </div>
 
                                 <div style="margin-bottom: 1rem;">
                                     <label style="font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">
-                                        Género
+                                        Gender
                                     </label>
                                     <div>
                                         {{
                                             user.profile.gender ||
-                                            "No especificado"
+                                            "Not specified"
                                         }}
                                     </div>
                                 </div>
 
                                 <div style="margin-bottom: 1rem;">
                                     <label style="font-size: 0.875rem; margin-bottom: 0.5rem; display: block;">
-                                        Nombre Completo
+                                        Full Name
                                     </label>
                                     <div>
                                         <span>{{ fullName }}</span>
@@ -245,10 +245,10 @@ function handleEditProfile() {
                                     style="width: 80px; height: 80px"
                                 />
                                 <h3>
-                                    Sin Perfil
+                                    No Profile
                                 </h3>
                                 <p>
-                                    No hay información de perfil disponible
+                                    No profile information available
                                 </p>
                             </div>
                         </div>
@@ -257,8 +257,8 @@ function handleEditProfile() {
                     <div v-if="user.profile?.addresses?.length" style="margin-top: 1rem;">
                         <Divider style="margin-bottom: 1rem;">
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="pi pi-map-marker" style="color: var(--primary-color); font-size: 1.125rem;"></i>
-                                <span style="color: var(--primary-color); font-weight: 600;">Direcciones Registradas</span>
+                                <i class="pi pi-map-marker" style="color: var(--primary-color); font-size: 1.15rem;"></i>
+                                <span style="color: var(--primary-color); font-weight: 600;">Registered Addresses</span>
                                 <Chip
                                     :label="user.profile.addresses.length"
                                     style="margin-left: 0.5rem;"
@@ -281,7 +281,7 @@ function handleEditProfile() {
                                                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                                                     <div style="display: flex; align-items: center; gap: 0.5rem;">
                                                         <i class="pi pi-map-marker" style="color: var(--primary-color);"></i>
-                                                        <span style="font-weight: 600;">Dirección {{ index + 1 }}</span>
+                                                        <span style="font-weight: 600;">Address {{ index + 1 }}</span>
                                                     </div>
                                                     <Tag
                                                         :label="address.id"
@@ -318,13 +318,13 @@ function handleEditProfile() {
                     <Button
                         @click="handleEditProfile"
                         icon="pi pi-user-edit"
-                        label="Editar Perfil"
+                        label="Edit Profile"
                         severity="primary"
                         size="large"
                     />
                     <Button
                         icon="pi pi-print"
-                        label="Imprimir"
+                        label="Print"
                         severity="secondary"
                         outlined
                         size="large"
@@ -341,12 +341,12 @@ function handleEditProfile() {
                         size="xlarge"
                         style="width: 100px; height: 100px; font-size: 2rem"
                     />
-                    <h2>Usuario No Disponible</h2>
+                    <h2>User Not Available</h2>
                     <p>
-                        No se ha cargado la información del usuario
+                        User information has not been loaded
                     </p>
                     <Button
-                        label="Recargar"
+                        label="Reload"
                         icon="pi pi-refresh"
                         severity="secondary"
                         outlined
