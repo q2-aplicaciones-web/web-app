@@ -6,35 +6,44 @@ const http = axios.create({
 });
 
 export class DesignLabService {
-    static async getGarmentColors() {
+    static baseURL = env.apiBaseUrl;
+
+    static async getGenders() {
         try {
-            return await http
-                .get("/garment-colors")
-                .then((response) => response);
+            const response = await http.get('/garment-gender');
+            return response.data;
         } catch (error) {
-            console.error("Error fetching garment colors:", error);
+            console.error('Error fetching genders:', error);
             throw error;
         }
     }
 
-    static async getGarmentSizes() {
+    static async getSizes() {
         try {
-            return await http
-                .get("/garment-sizes")
-                .then((response) => response);
+            const response = await http.get('/garment-sizes');
+            return response.data;
         } catch (error) {
-            console.error("Error fetching garment sizes:", error);
+            console.error('Error fetching sizes:', error);
             throw error;
         }
     }
 
-    static async getGarmentGender() {
+    static async getColors() {
         try {
-            return await http
-                .get("/garment-gender")
-                .then((response) => response);
+            const response = await http.get('/garment-colors');
+            return response.data;
         } catch (error) {
-            console.error("Error fetching garment gender:", error);
+            console.error('Error fetching colors:', error);
+            throw error;
+        }
+    }
+
+    static async getProjectStatuses() {
+        try {
+            const response = await http.get('/project-status');
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching project statuses:', error);
             throw error;
         }
     }

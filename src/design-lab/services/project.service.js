@@ -36,14 +36,19 @@ export class ProjectService {
         }
     }
 
-    // async createProject(data) {
-    //     try {
-    //         ProjectSchema.parse(data);
-    //         return await http.post("/projects", data);
-    //     } catch (error) {
-    //         this.handleError(error);
-    //     }
-    // }    async updateProject(id, data) {
+    static async createProject(data) {
+        try {
+            console.log('Creating project with data:', data);
+            const response = await http.post("/projects", data);
+            console.log('Project created successfully:', response);
+            return response;
+        } catch (error) {
+            console.error('Error creating project:', error);
+            throw error;
+        }
+    }
+
+    // async updateProject(id, data) {
     //     try {
     //         console.log('ProjectService.updateProject called with:', { id, data });
     //         ProjectSchema.parse(data);
