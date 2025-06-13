@@ -102,11 +102,13 @@ async function loadGenderOptions() {
   }
 }
 
+const userId = import.meta.env.VITE_DEFAULT_USER_ID;
+
 async function loadUserProfile() {
   loadingProfile.value = true;
   try {
     // ✅ Cargar usuario real desde db.json
-    const userEntity = await UserService.getUserById('user-1');
+    const userEntity = await UserService.getUserById(userId);
     currentUser.value = userEntity;
     
     // Llenar formulario con datos actuales
@@ -141,7 +143,7 @@ async function updateProfile() {
     console.log('Updating profile with data:', editForm.value);
     
     // ✅ ENVIAR datos al backend (db.json)
-    const updatedUserEntity = await UserService.updateUserProfile('user-1', {
+    const updatedUserEntity = await UserService.updateUserProfile(userId, {
       firstName: editForm.value.firstName,
       lastName: editForm.value.lastName,
       gender: editForm.value.gender
