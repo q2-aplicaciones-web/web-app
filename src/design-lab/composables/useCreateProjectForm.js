@@ -1,5 +1,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { DesignLabService } from '../services/design-lab.service.js';
+import { env } from '../../env';
 
 export function useCreateProjectForm() {
     // Form state
@@ -96,7 +97,7 @@ export function useCreateProjectForm() {
             garment_color: garmentColor.value,
             garment_size: garmentSize.value,
             status: 'blueprint', // Default status
-            user_id: 'user-1', // TODO: Get from auth service
+            user_id: env.defaultUserId,
             created_at: new Date().toISOString(),
             last_modified: new Date().toISOString(),
             preview_image_url: 'https://picsum.photos/150/150',
