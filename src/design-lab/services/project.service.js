@@ -1,8 +1,11 @@
 import axios from "axios";
 import { ProjectAssembler } from "./project.assembler";
+import { UserService } from "../../user_management/services/user.service";
 
 const baseUrl =
     import.meta.env.VITE_FAKE_API_BASE_URL || "http://localhost:3000";
+
+
 
 const http = axios.create({
     baseURL: baseUrl,
@@ -12,12 +15,15 @@ export class ProjectService {
     static async getProjects() {
         console.log("Fetching projects...");
         console.log(baseUrl);
+        const userId = await UserService.getSessionUserId(); // Change this when user service is available
         try {
-            return await http
-                .get("/projects")
+            const data = await http
+                .get(`/projects?user_id=${userId}`)
                 .then((response) =>
                     ProjectAssembler.toEntitiesFromResponse(response.data)
                 );
+            console.log("Projects fetched successfully:", data);
+            return data;
         } catch (error) {
             console.error("Error fetching projects:", error);
             return [];
