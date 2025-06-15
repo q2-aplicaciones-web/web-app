@@ -1,10 +1,8 @@
 import { env } from '../../env.js';
 
 export async function getOrdersByUser(userId) {
-  // Si no se pasa userId, usar el de entorno por defecto
-  const effectiveUserId = userId || env.defaultUserId;
-
-  const res = await fetch(`${env.apiBaseUrl}/orders?user_id=${effectiveUserId}`);
+  
+  const res = await fetch(`${env.apiBaseUrl}/orders?user_id=${userId}`);
   if (!res.ok) throw new Error('Error fetching orders');
   const orders = await res.json();
 
