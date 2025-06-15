@@ -5,8 +5,10 @@ import Button from "primevue/button";
 import Menu from "primevue/menu";
 import Toolbar from "primevue/toolbar";
 import Toast from "primevue/toast";
+import OverlayPanel from "primevue/overlaypanel";
 import { useRouter, useRoute } from "vue-router";
 import { ref, computed, provide, watch, nextTick, getCurrentInstance } from "vue";
+import ShoppingCartPopover from "./orders-processing/components/shopping-cart-popover.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -17,6 +19,9 @@ const isEditingTitle = ref(false);
 const editableTitle = ref('');
 const titleInput = ref(null);
 const updateProjectFunction = ref(null);
+const overlayPanelRef = ref(null);
+const currentUserId = ref("user-1"); // Simulación: el usuario actual es el 1
+const currencyCode = ref('PEN'); // Permite cambiar el tipo de moneda
 
 // Provide the dynamic title so child components can update it
 provide('pageTitle', {
@@ -94,6 +99,10 @@ function handleTitleKeydown(event) {
   }
 }
 
+function showCartPopover(event) {
+    overlayPanelRef.value.toggle(event);
+}
+
 // Watch for route changes to reset dynamic title when navigating away
 watch(route, (newRoute) => {
   // Reset dynamic title when route changes, unless it's the same route with different params
@@ -144,8 +153,10 @@ const items = [
 <template>
     <Toast />
     <main>
-        <section class="content">            <Toolbar>
-                <template #start>                    <div class="title-container">
+        <section class="content">
+            <Toolbar>
+                <template #start>
+                    <div class="title-container">
                         <h2 
                             v-if="!isEditingTitle" 
                             @dblclick="startEditingTitle"
@@ -192,7 +203,11 @@ const items = [
                             rounded
                             text
                             aria-label="Cart"
+                            @click="showCartPopover"
                         />
+                        <OverlayPanel ref="overlayPanelRef">
+                            <ShoppingCartPopover :user-id="currentUserId" :currency-code="currencyCode" />
+                        </OverlayPanel>
                         <Button
                             icon="pi pi-user"
                             severity="secondary"
@@ -207,11 +222,7 @@ const items = [
             <router-view />
         </section>
         <div class="sidebar">
-            <Menu :model="items">
-                <template #start>
-                    <div class="menu-header">Q2</div>
-                </template>
-            </Menu>
+            <Menu :model="items" />
         </div>
     </main>
 </template>
