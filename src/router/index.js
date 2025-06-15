@@ -2,6 +2,7 @@ import HomeComponent from "../public/pages/home.component.vue";
 import { createRouter, createWebHistory } from "vue-router";
 import CreateProjectComponent from "../design-lab/components/create-project.component.vue";
 import DashboardComponent from "../public/pages/dashboard.component.vue";
+import ShoppingCartComponent from "../public/pages/shopping-cart.component.vue";
 
 const DesignLabComponent = () =>
     import("../public/pages/design-lab.component.vue");
@@ -46,6 +47,12 @@ const routes = [
         name: "profile",
         component: ProfileComponent,
         meta: { title: "Profile" },
+    },
+    {
+        path: "/shopping-cart",
+        name: "shopping-cart",
+        component: ShoppingCartComponent,
+        meta: { title: "Shopping Cart" },
     },
     { path: "/", name: "default", redirect: "/home" },
 ];
