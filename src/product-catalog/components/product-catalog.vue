@@ -37,7 +37,7 @@ function openDetail(product) {
 
 function addToCart(product) {
   // Implementa la lógica de agregar al carrito aquí
-  alert('Producto agregado al carrito');
+  //alert('Producto agregado al carrito');
 }
 </script>
 
