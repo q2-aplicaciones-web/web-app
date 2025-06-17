@@ -1,5 +1,5 @@
-import HomeComponent from "../public/pages/home.component.vue";
 import { createRouter, createWebHistory } from "vue-router";
+import HomeComponent from "../public/pages/home.component.vue";
 import CreateProjectComponent from "../design-lab/components/create-project.component.vue";
 import DashboardComponent from "../public/pages/dashboard.component.vue";
 import ShoppingCartComponent from "../public/pages/shopping-cart.component.vue";
@@ -10,6 +10,8 @@ const ProjectDetailComponent = () =>
     import("../design-lab/components/project-detail.component.vue");
 const ProfileComponent = () =>
     import("../public/pages/profile.component.vue");
+const ExplorePageComponent = () =>
+    import("../public/pages/explore.component.vue");
 
 const routes = [
     {
@@ -53,6 +55,12 @@ const routes = [
         name: "shopping-cart",
         component: ShoppingCartComponent,
         meta: { title: "Shopping Cart" },
+    },
+    {
+        path: "/explore",
+        name: "explore",
+        component: ExplorePageComponent,
+        meta: { title: "Explore" },
     },
     { path: "/", name: "default", redirect: "/home" },
 ];
