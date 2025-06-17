@@ -1,81 +1,212 @@
 <template>
-  <div>
+  <div class="cart-popover">
     <h3>Shopping Cart</h3>
-    <div v-if="loading">Loading...</div>
-    <div v-else>
-      <div v-if="orders.length === 0">No items in cart.</div>
-      <div v-else>
-        <div v-for="order in orders" :key="order.orderId" class="cart-item" style="margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 1rem;">
-          <div style="display: flex; align-items: center; gap: 1rem;">
-            <img :src="order.projectImage" alt="preview" style="width: 60px; height: 60px; object-fit: cover; border-radius: 6px;" />
-            <div>
-              <div><strong>{{ order.projectName }}</strong></div>
-              <div>Amount: <strong>{{ order.quantity }}</strong></div>
-              <div>{{ currencySymbol }}{{ formatCurrency(order.price) }}</div>
+    <template v-if="cart && cart.items.length > 0">
+      <div class="cart-items">
+        <div class="cart-item" v-for="item in cart.items" :key="item.project_id">
+          <img :src="item.projectImage" alt="T-shirt" class="cart-item-img" />
+          <div class="cart-item-info">
+            <div class="cart-item-title">{{ item.projectName }}</div>
+            <div class="cart-item-qty-row">
+              <div class="cart-item-qty-btns">
+                <Button icon="pi pi-minus" @click="decreaseQuantity(item)" text rounded />
+                <span class="cart-item-qty-value">{{ item.quantity }}</span>
+                <Button icon="pi pi-plus" @click="increaseQuantity(item)" text rounded />
+              </div>
+              <a href="#" @click.prevent="removeItem(item)" class="cart-item-remove">Remove</a>
+            </div>
+            <div class="cart-item-price-row">
+              <span>{{ currency(item.unit_price) }}</span>
+              <span class="cart-item-subtotal">Subtotal: {{ currency(item.subtotal) }}</span>
             </div>
           </div>
-          <div style="margin-top: 0.5rem;">
-            <div>Subtotal: <span style="float:right">{{ currencySymbol }}{{ formatCurrency(order.subtotal) }}</span></div>
-            <div>Discount: <span style="float:right">- {{ currencySymbol }}{{ formatCurrency(order.discountAmount) }}</span></div>
-            <div><strong>Total: <span style='float:right'>{{ currencySymbol }}{{ formatCurrency(order.total) }}</span></strong></div>
-          </div>
         </div>
-        <button class="p-button p-component" style="width: 100%; margin-top: 0.5rem;" @click="$router.push({ name: 'shopping-cart', query: { userId: userId, currencyCode: currencyCode } })">View Details</button>
       </div>
-    </div>
+      <div class="cart-summary">
+        <div class="cart-summary-row">
+          <span>Subtotal:</span>
+          <span>{{ currency(cart.items.reduce((sum, i) => sum + i.subtotal, 0)) }}</span>
+        </div>
+        <div class="cart-summary-row cart-summary-total">
+          <span>Total:</span>
+          <span>{{ currency(cart.items.reduce((sum, i) => sum + i.subtotal, 0)) }}</span>
+        </div>
+      </div>
+      <div class="cart-actions">
+        <Button label="View Details" @click="goToCart" outlined />
+      </div>
+    </template>
+    <template v-else>
+      <div class="no-orders">You have no items in your cart.</div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
-import { getOrdersByUser } from '../services/order.service.js';
-import { getDiscountForUser } from '../services/discount-policy.service.js';
+import { ref, onMounted } from 'vue';
+import Button from 'primevue/button';
+import cartService from '../services/cart.service.js';
+import { env } from '../../env.js';
+import { UserService } from '../../user_management/services/user.service.js';
+import { CartItem } from '../models/cart.entity.js';
 
-const props = defineProps({
-  userId: { type: [Number, String], required: true },
-  currencyCode: { type: String, default: 'PEN' }
-});
+const cart = ref(null);
+const currencyCode = env.currencyCode || 'USD';
+const userId = ref(null);
 
-const currencySymbol = computed(() => {
-  
-  const symbols = { PEN: 'PEN', USD: '$', EUR: '€' };
-  return symbols[props.currencyCode] || props.currencyCode;
-});
-
-const orders = ref([]);
-const loading = ref(true);
-
-function formatCurrency(value) {
-  return Number(value).toLocaleString('en-US', { style: 'currency', currency: props.currencyCode, minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/^\D+/g, '');
+function currency(val) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(Number(val));
 }
 
-async function fetchCart() {
-  loading.value = true;
-  const rawOrders = await getOrdersByUser(props.userId);
-  
-  const processed = await Promise.all(rawOrders.map(async (order) => {
-    const discount = await getDiscountForUser(order.applied_discounts);
-    const subtotal = order.price * order.quantity;
-    const discountAmount = discount ? subtotal * (discount.value / 100) : 0;
-    const total = subtotal - discountAmount;
-    return {
-      ...order,
-      projectImage: order.projectImage,
-      subtotal,
-      discountAmount,
-      total
-    };
-  }));
-  orders.value = processed;
-  loading.value = false;
+function processCartItems(cartData) {
+  cartData.items = (cartData.items || []).map(item => {
+    const cartItem = new CartItem();
+    cartItem.project_id = item.project_id;
+    cartItem.quantity = Number(item.quantity) || 1;
+    cartItem.unit_price = Number(item.unit_price) || 0;
+    cartItem.projectImage = item.projectImage || '';
+    cartItem.projectName = item.projectName || '';
+    cartItem.projectDescription = item.projectDescription || '';
+    return cartItem;
+  });
+  return cartData;
 }
 
-onMounted(fetchCart);
-watch(() => props.userId, fetchCart);
+async function loadCart() {
+  if (!userId.value) return;
+  const carts = await cartService.getCartByUser(userId.value);
+  if (carts && carts.length > 0) {
+    cart.value = processCartItems(carts[0]);
+  } else {
+    cart.value = null;
+  }
+}
+
+function increaseQuantity(item) {
+  item.quantity++;
+  updateCartOnServer();
+}
+
+function decreaseQuantity(item) {
+  if (item.quantity > 1) {
+    item.quantity--;
+    updateCartOnServer();
+  }
+}
+
+function removeItem(item) {
+  cart.value.items = cart.value.items.filter(i => i !== item);
+  updateCartOnServer();
+  if (cart.value.items.length === 0) {
+    cart.value = null;
+  }
+}
+
+function updateCartOnServer() {
+  cartService.updateCart(cart.value).then(updatedCart => {
+    cart.value = processCartItems(updatedCart);
+  });
+}
+
+function goToCart() {
+  window.location.href = '/shopping-cart';
+}
+
+onMounted(async () => {
+  userId.value = await UserService.getSessionUserId();
+  await loadCart();
+});
 </script>
 
 <style scoped>
-.cart-item strong {
+.cart-popover {
+  min-width: 250px;
+  max-width: 400px;
+  overflow-x: hidden;
+  display: inline-block;
+  padding: 16px;
+}
+.cart-items {
+  margin-bottom: 12px;
+}
+.cart-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+.cart-item-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  margin-right: 10px;
+  object-fit: cover;
+}
+.cart-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cart-item-title {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+.cart-item-qty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.cart-item-qty-btns {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cart-item-qty-value {
+  min-width: 20px;
+  text-align: center;
+  display: inline-block;
+}
+.cart-item-remove {
+  color: #1976d2;
+  text-decoration: underline;
+  margin-left: 12px;
+  font-size: 0.95em;
+  cursor: pointer;
+}
+.cart-item-price-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.98em;
+  color: #222;
+}
+.cart-item-subtotal {
+  margin-left: 8px;
+  color: #888;
+}
+.cart-summary {
+  font-size: 15px;
+  margin-bottom: 12px;
+  margin-top: 8px;
+}
+.cart-summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+.cart-summary-total {
   font-weight: bold;
+  font-size: 1.08em;
+}
+.cart-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.no-orders {
+  text-align: center;
+  color: #888;
+  padding: 16px 0 8px 0;
 }
 </style>
