@@ -43,16 +43,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import cartService from '../services/cart.service.js';
 import { env } from '../../env.js';
 import { UserService } from '../../user_management/services/user.service.js';
 import { CartItem } from '../models/cart.entity.js';
+import { useUserDomain } from '../../access-security/services/user-domain.service.js';
 
 const cart = ref(null);
 const currencyCode = env.currencyCode || 'USD';
-const userId = ref(null);
+const { currentUser } = useUserDomain();
 
 function currency(val) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(Number(val));
@@ -72,9 +73,9 @@ function processCartItems(cartData) {
   return cartData;
 }
 
-async function loadCart() {
-  if (!userId.value) return;
-  const carts = await cartService.getCartByUser(userId.value);
+async function loadCart(userId) {
+  if (!userId) return;
+  const carts = await cartService.getCartByUser(userId);
   if (carts && carts.length > 0) {
     cart.value = processCartItems(carts[0]);
   } else {
@@ -112,10 +113,21 @@ function goToCart() {
   window.location.href = '/shopping-cart';
 }
 
+// Cargar carrito al montar y cuando cambie el usuario
 onMounted(async () => {
-  userId.value = await UserService.getSessionUserId();
-  await loadCart();
+  if (currentUser.value && currentUser.value.id) {
+    await loadCart(currentUser.value.id);
+  }
 });
+
+watch(
+  () => currentUser.value && currentUser.value.id,
+  async (newUserId, oldUserId) => {
+    if (newUserId && newUserId !== oldUserId) {
+      await loadCart(newUserId);
+    }
+  }
+);
 </script>
 
 <style scoped>
