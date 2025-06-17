@@ -27,21 +27,42 @@
     <template #footer>
       <div class="card-footer-btns">
         <Button label="View" icon="pi pi-eye" @click="$emit('view', product)" />
-        <Button label="Add to Cart" icon="pi pi-shopping-cart" severity="success" @click="$emit('add-to-cart', product)" />
+        <Button label="Add to Cart" icon="pi pi-shopping-cart" severity="success" @click="handleAddToCart" />
       </div>
     </template>
   </Card>
 </template>
 
 <script setup>
-import { defineProps } from 'vue';
+import { defineProps, getCurrentInstance } from 'vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import { env } from '../../env';
+import cartService from '../../orders-processing/services/cart.service.js';
+import { UserService } from '../../user_management/services/user.service.js';
+import Toast from 'primevue/toast';
+import { useToast } from 'primevue/usetoast';
 
-defineProps({
+const props = defineProps({
   product: Object
 });
+
+const { emit, proxy } = getCurrentInstance();
+const toast = useToast();
+
+async function handleAddToCart() {
+  let userId = env.defaultUserId;
+  try {
+    userId = await UserService.getSessionUserId();
+  } catch (e) {}
+  await cartService.addToCart(props.product, userId);
+  toast.add({ severity: 'success', summary: 'Added to cart', detail: props.product.projectDetails?.name || props.product.name || 'Product', life: 2000 });
+  emit('add-to-cart', props.product);
+
+  if (proxy && proxy.$root && proxy.$root.$refs && proxy.$root.$refs.cartPopover) {
+    proxy.$root.$refs.cartPopover.loadCart && proxy.$root.$refs.cartPopover.loadCart();
+  }
+}
 </script>
 
 <style scoped>
