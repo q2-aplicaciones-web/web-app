@@ -42,6 +42,7 @@ import cartService from '../../orders-processing/services/cart.service.js';
 import { UserService } from '../../user_management/services/user.service.js';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
+import { useUserDomain } from '../../access-security/services/user-domain.service.js';
 
 const props = defineProps({
   product: Object
@@ -49,12 +50,10 @@ const props = defineProps({
 
 const { emit, proxy } = getCurrentInstance();
 const toast = useToast();
+const { currentUser } = useUserDomain();
 
 async function handleAddToCart() {
-  let userId = env.defaultUserId;
-  try {
-    userId = await UserService.getSessionUserId();
-  } catch (e) {}
+  let userId = currentUser.value?.id || env.defaultUserId;
   await cartService.addToCart(props.product, userId);
   toast.add({ severity: 'success', summary: 'Added to cart', detail: props.product.projectDetails?.name || props.product.name || 'Product', life: 2000 });
   emit('add-to-cart', props.product);
