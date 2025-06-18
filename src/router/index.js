@@ -12,6 +12,8 @@ const ProfileComponent = () =>
     import("../public/pages/profile.component.vue");
 const ExplorePageComponent = () =>
     import("../public/pages/explore.component.vue");
+const ManufacturerOrdersPageComponent = () =>
+    import("../public/pages/manufacturer-orders-page.component.vue");
 
 const routes = [
     {
@@ -61,6 +63,12 @@ const routes = [
         name: "explore",
         component: ExplorePageComponent,
         meta: { title: "Explore" },
+    },
+    {
+        path: "/manufacturer-orders",
+        name: "manufacturer-orders",
+        component: ManufacturerOrdersPageComponent,
+        meta: { title: "Order Management" },
     },
     { path: "/", name: "default", redirect: "/home" },
 ];
