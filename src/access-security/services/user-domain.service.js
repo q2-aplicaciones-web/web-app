@@ -1,4 +1,5 @@
 import { ref, computed } from 'vue';
+import { env } from '../../env';
 
 // Estado reactivo global para el usuario actual
 const currentUser = ref(null);
