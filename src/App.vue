@@ -141,6 +141,13 @@ const items = [
         },
     },
     {
+        label: "Order Management",
+        icon: "pi pi-list",
+        command: () => {
+            router.push("/manufacturer-orders");
+        },
+    },
+    {
         label: "Settings",
         icon: "pi pi-cog",
         command: () => {
