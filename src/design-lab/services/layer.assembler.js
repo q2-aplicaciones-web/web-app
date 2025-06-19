@@ -1,54 +1,42 @@
+import { DEFAULT_LAYER_STYLES } from "../../consts";
+import { ImageLayer, TextLayer } from "../model/layer.entity";
+
+
 export class LayerAssembler {
+
     static toEntityFromResponse(response) {
-        const content = response.content;
-        const layer = {
-            id: response.id,
-            canvasId: response.canvas_id,
-            type: response.type,
-            zIndex: response.z_index,
-            isVisible: response.is_visible,
-            createdAt: new Date(response.created_at),
-            lastModified: new Date(response.last_modified),
-        };
-
-        const layerContent = {
-            x: content.x || 0,
-            y: content.y || 0,
-            rotation: content.rotation || 0,
-            opacity: content.opacity || 1,
-        };
-
-        if (response.type === "image") {
-            layerContent.imageUrl = content.image_url || "";
-            layerContent.width = content.width || 0;
-            layerContent.height = content.height || 0;
-            layerContent.scale = content.scale || 1;
-            layerContent.maintainAspectRatio =
-                content.maintain_aspect_ratio || false;
-
-            return {
-                ...layer,
-                content: layerContent,
-            };
-        } else if (response.type === "text") {
-            layerContent.text = content.text || "";
-            layerContent.fontFamily = content.font_family || "";
-            layerContent.fontSize = content.font_size || 0;
-            layerContent.fontWeight = content.font_weight || 0;
-            layerContent.color = content.color || "";
-            layerContent.textAlign = content.text_align || "left";
-            return {
-                ...layer,
-                content: layerContent,
-            };
+        if (response.type === 'image') {
+            return new ImageLayer(
+                response.id,
+                response.x,
+                response.y,
+                response.z_index,
+                response.opacity,
+                response.visible,
+                response.image_url || ''
+            );
+        } else if (response.type === 'text') {
+            return new TextLayer(
+                response.id,
+                response.x,
+                response.y,
+                response.z_index,
+                response.opacity,
+                response.visible,
+                response.text_content || '',
+                response.font_size || DEFAULT_LAYER_STYLES.FONT_SIZE,
+                response.font_color || DEFAULT_LAYER_STYLES.FONT_COLOR,
+                response.font_family || DEFAULT_LAYER_STYLES.FONT_FAMILY,
+                response.bold || DEFAULT_LAYER_STYLES.BOLD,
+                response.italic || DEFAULT_LAYER_STYLES.ITALIC,
+                response.underline || DEFAULT_LAYER_STYLES.UNDERLINE
+            );
+        } else {
+            throw new Error(`Unknown layer type: ${response.type}`);
         }
-
-        throw new Error(`Unknown layer type: ${response.type}`);
     }
 
-    static toEntitiesFromResponse(response) {
-        return response.map((layerResponse) => {
-            return LayerAssembler.toEntityFromResponse(layerResponse);
-        });
+    static toEntitiesFromResponse(responses) {
+        return responses.map(response => LayerAssembler.toEntityFromResponse(response));
     }
 }

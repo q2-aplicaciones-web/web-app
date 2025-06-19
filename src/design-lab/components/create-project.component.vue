@@ -1,93 +1,61 @@
 <script setup>
-import { ref } from "vue";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 import InputText from "primevue/inputtext";
-import Dropdown from "primevue/dropdown";
+import Select from "primevue/select";
 import Button from "primevue/button";
 import Card from "primevue/card";
 import { ProjectService } from "../services/project.service.js";
 import { useToast } from "primevue/usetoast";
+import { useCreateProjectForm } from "../composables/useCreateProjectForm.js";
+import { useGarmentPreview } from "../composables/useGarmentPreview.js";
 
 const router = useRouter();
 const toast = useToast();
 
-const name = ref("");
-const genre = ref("men");
-const garmentColor = ref("#161615");
-const garmentSize = ref("M");
-const loading = ref(false);
+// Use composables
+const {
+  name,
+  gender,
+  garmentColor,
+  garmentSize,
+  loading,
+  loadingData,
+  genders,
+  garmentSizes,
+  garmentColors,
+  isFormValid,
+  selectedColorLabel,
+  getFormData,
+  resetForm
+} = useCreateProjectForm();
 
-const genres = [
-  { label: "Men", value: "men" },
-  { label: "Women", value: "women" },
-  { label: "Unisex", value: "unisex" },
-];
-const garmentSizes = [
-  { label: "Small (S)", value: "S" },
-  { label: "Medium (M)", value: "M" },
-  { label: "Large (L)", value: "L" },
-  { label: "Extra Large (XL)", value: "XL" }
-];
-const garmentColors = [
-  { label: "black", value: "#161615" },      // row 0, col 0
-  { label: "gray", value: "#403D3B" },      // row 0, col 1
-  { label: "light-gray", value: "#B3B1AF" },// row 0, col 2
-  { label: "white", value: "#EDEDED" },     // row 0, col 3
-  { label: "red", value: "#B51B14" },       // row 1, col 0
-  { label: "pink", value: "#F459B0" },      // row 1, col 1
-  { label: "light-purple", value: "#D890E4" },// row 1, col 2
-  { label: "purple", value: "#693FA0" },    // row 1, col 3
-  { label: "light-blue", value: "#00A5BC" },// row 2, col 0
-  { label: "cyan", value: "#31B7C9" },      // row 2, col 1
-  { label: "sky-blue", value: "#3F9BDC" },  // row 2, col 2
-  { label: "blue", value: "#1B3D92" },      // row 2, col 3
-  { label: "green", value: "#1B8937" },     // row 3, col 0
-  { label: "light-green", value: "#5BBE65" },// row 3, col 1
-  { label: "yellow", value: "#FECD08" },    // row 3, col 2
-  { label: "dark-yellow", value: "#F2AB00" } // row 3, col 3
-];
+const { previewStyle } = useGarmentPreview(garmentColors, garmentColor);
 
-const garmentColorImages = "https://res.cloudinary.com/dkkfv72vo/image/upload/v1747000549/Frame_530_hfhrko.webp";
-function getGarmentColorPosition(label) {
-  const idx = garmentColors.findIndex(
-    (c) => c.label === label || c.value === label
-  );
-  if (idx === -1) return "0px 0px";
-  const col = idx % 4;
-  const row = Math.floor(idx / 4);
-  return `-${col * 300}px -${row * 300}px`;
-}
+// Computed properties for UI
+const isSubmitDisabled = computed(() => loading.value || loadingData.value || !isFormValid.value);
+
+const formatColorLabel = (label) => {
+  return label?.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || '';
+};
 
 async function createProject() {
   loading.value = true;
   try {
-    // Generate unique IDs
+    // Generate unique project ID
     const projectId = crypto.randomUUID();
-    const canvasId = crypto.randomUUID();
     
-    const data = {
+    // Get form data using composable
+    const formData = getFormData();
+    
+    // Create project data with proper structure
+    const projectData = {
       id: projectId,
-      userId: "user-001", // Replace with real user logic if needed
-      name: name.value,
-      genre: genre.value,
-      garmentColor: garmentColor.value,
-      garmentSize: garmentSize.value,
-      status: "blueprint",
-      createdAt: new Date().toISOString(),
-      lastModified: new Date().toISOString(),
-      previewImageUrl: "https://placeholder.com/tshirt", // Placeholder URL to satisfy schema
-      canvas: {
-        id: canvasId,
-        projectId: projectId, // Set the correct project ID reference
-        backgroundColor: garmentColor.value,
-        createdAt: new Date().toISOString(),
-        lastModified: new Date().toISOString(),
-        layers: [], // Empty array satisfies the schema
-      },
+      ...formData
     };
     
     // Call the service to create the project
-    const response = await new ProjectService().createProject(data);
+    const response = await ProjectService.createProject(projectData);
     
     // Show success message
     toast.add({ 
@@ -117,36 +85,41 @@ async function createProject() {
 <template>
   <section class="create-project-page">
     <Card class="create-project-card">
-      <template #title>New Project</template>
       <template #content>
         <div class="form-content">
           <div class="preview-panel">
             <div
               class="garment-preview"
-              :style="{
-                backgroundImage: `url(${garmentColorImages})`,
-                backgroundPosition: getGarmentColorPosition(garmentColor),
-                width: '300px',
-                height: '300px',
-                backgroundSize: '1200px 1200px',
-                borderRadius: '16px',
-                border: '2px solid #eee',
-                boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
-              }"
+              :style="previewStyle"
             ></div>
           </div>
           <div class="form-panel">
             <form @submit.prevent="createProject">
               <div class="form-group">
                 <label for="name">Project Name</label>
-                <InputText id="name" v-model="name" required placeholder="Enter project name" />
+                <InputText 
+                  id="name" 
+                  v-model="name" 
+                  required 
+                  placeholder="Enter project name"
+                  :disabled="loadingData"
+                />
               </div>
               <div class="form-group">
-                <label for="genre">Genre</label>
-                <Dropdown id="genre" v-model="genre" :options="genres" optionLabel="label" optionValue="value" placeholder="Select genre" required />
+                <label for="gender">Gender</label>
+                <Select 
+                  id="gender" 
+                  v-model="gender" 
+                  :options="genders" 
+                  optionLabel="label" 
+                  optionValue="value" 
+                  placeholder="Select gender" 
+                  required
+                  :disabled="loadingData"
+                />
               </div>              <div class="form-group">
                 <label for="color">Garment Color</label>
-                <Dropdown 
+                <Select 
                   id="color" 
                   v-model="garmentColor" 
                   :options="garmentColors" 
@@ -154,29 +127,44 @@ async function createProject() {
                   optionValue="value" 
                   placeholder="Select color" 
                   required
-                  :class="{ 'p-dropdown-max-height': true }"
+                  :disabled="loadingData"
+                  :class="{ 'p-select-max-height': true }"
                 >
                   <template #option="slotProps">
                     <div class="color-option-item">
                       <span class="color-swatch" :style="{ backgroundColor: slotProps.option.value }"></span>
-                      <span class="color-label">{{ slotProps.option.label.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) }}</span>
+                      <span class="color-label">{{ formatColorLabel(slotProps.option.label) }}</span>
                     </div>
                   </template>
                   <template #value="slotProps">
                     <div class="color-option-item" v-if="slotProps.value">
                       <span class="color-swatch" :style="{ backgroundColor: slotProps.value }"></span>
-                      <span class="color-label">
-                        {{ garmentColors.find(c => c.value === slotProps.value)?.label.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) }}
-                      </span>
+                      <span class="color-label">{{ formatColorLabel(selectedColorLabel) }}</span>
                     </div>
                     <span v-else>Select color</span>
                   </template>
-                </Dropdown>
-              </div>              <div class="form-group">
-                <label for="size">Garment Size</label>
-                <Dropdown id="size" v-model="garmentSize" :options="garmentSizes" optionLabel="label" optionValue="value" placeholder="Select size" required />
+                </Select>
               </div>
-              <Button type="submit" label="Create Project" :loading="loading" :disabled="loading" class="create-btn" />
+              <div class="form-group">
+                <label for="size">Garment Size</label>
+                <Select 
+                  id="size" 
+                  v-model="garmentSize" 
+                  :options="garmentSizes" 
+                  optionLabel="label" 
+                  optionValue="value" 
+                  placeholder="Select size" 
+                  required
+                  :disabled="loadingData"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                label="Create Project" 
+                :loading="loading" 
+                :disabled="isSubmitDisabled" 
+                class="create-btn" 
+              />
             </form>
           </div>
         </div>
@@ -189,13 +177,24 @@ async function createProject() {
 .create-project-page {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
+  min-height: 90vh;
   padding: 2rem;
 }
 .create-project-card {
   min-width: 700px;
   max-width: 900px;
   width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .create-project-page {
+    padding: 1rem;
+  }
+  .create-project-card {
+    min-width: auto;
+  }
 }
 .form-content {
   display: flex;
@@ -206,10 +205,24 @@ async function createProject() {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  min-width: 300px;
+  min-width: 400px;
 }
 .form-panel {
   flex: 1;
+}
+
+@media (max-width: 768px) {
+  .form-content {
+    flex-direction: column;
+    align-items: center;
+  }
+  .preview-panel {
+    order: -1; /* This makes the preview panel appear first */
+    margin-bottom: 2rem;
+  }
+  .form-panel {
+    width: 100%;
+  }
 }
 .garment-preview {
   background-repeat: no-repeat;
@@ -237,7 +250,7 @@ async function createProject() {
   border-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
-:deep(.p-dropdown-max-height .p-dropdown-items) {
+:deep(.p-select-max-height .p-select-overlay .p-select-list) {
   max-height: 250px;
   overflow-y: auto;
 }

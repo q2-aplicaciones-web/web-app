@@ -4,12 +4,126 @@ import Sidebar from "primevue/sidebar";
 import Button from "primevue/button";
 import Menu from "primevue/menu";
 import Toolbar from "primevue/toolbar";
+import Toast from "primevue/toast";
+import OverlayPanel from "primevue/overlaypanel";
 import { useRouter, useRoute } from "vue-router";
+import { ref, computed, provide, watch, nextTick, getCurrentInstance, onMounted, onUnmounted } from "vue";
+import ShoppingCartPopover from "./orders-processing/components/shopping-cart-popover.vue";
+import { useRoleDomain } from "./access-security/services/role-domain.service";
 
 const router = useRouter();
 const route = useRoute();
+const { currentRole, hasPermission, ROLES } = useRoleDomain();
 
-const items = [
+// Check if user has manufacturer role
+const isManufacturer = computed(() => {
+  return currentRole.value === ROLES.MANUFACTURER || currentRole.value === ROLES.ADMIN;
+});
+
+// Setup reactivity for menu based on role changes
+const menuItems = ref([]);
+
+// Create a reactive title reference
+const dynamicTitle = ref(null);
+const isEditingTitle = ref(false);
+const editableTitle = ref('');
+const titleInput = ref(null);
+const updateProjectFunction = ref(null);
+const overlayPanelRef = ref(null);
+const currentUserId = ref("user-1"); // Simulación: el usuario actual es el 1
+const currencyCode = ref('PEN'); // Permite cambiar el tipo de moneda
+
+// Provide the dynamic title so child components can update it
+provide('pageTitle', {
+  title: dynamicTitle,
+  setTitle: (newTitle) => {
+    dynamicTitle.value = newTitle;
+  },
+  setUpdateFunction: (updateFn) => {
+    updateProjectFunction.value = updateFn;
+  }
+});
+
+// Computed property for the displayed title
+const displayTitle = computed(() => {
+  return dynamicTitle.value || route.meta.title || 'Q2';
+});
+
+// Functions for title editing
+function startEditingTitle() {
+  // Only allow editing if we're on a project detail page, have a dynamic title, and it's actually a project name
+  if (route.name === 'project-detail' && dynamicTitle.value && dynamicTitle.value.trim()) {
+    isEditingTitle.value = true;
+    editableTitle.value = dynamicTitle.value;
+    // Focus the input field after the DOM updates
+    nextTick(() => {
+      if (titleInput.value) {
+        titleInput.value.focus();
+        titleInput.value.select();
+      }
+    });
+  }
+}
+
+function saveTitle() {
+  console.log('saveTitle called with:', editableTitle.value.trim());
+  if (editableTitle.value.trim() && route.name === 'project-detail') {
+    const newTitle = editableTitle.value.trim();
+    
+    // Only update if the title actually changed
+    if (newTitle !== dynamicTitle.value) {
+      console.log('Title changed from', dynamicTitle.value, 'to', newTitle);
+      dynamicTitle.value = newTitle;
+      // Update document title as well
+      document.title = `Q2 | ${newTitle}`;
+      
+      // Use the stored update function
+      if (updateProjectFunction.value) {
+        console.log('Calling updateProjectFunction with:', newTitle);
+        updateProjectFunction.value(newTitle);
+      } else {
+        console.log('No updateProjectFunction available');
+      }
+    } else {
+      console.log('Title unchanged, not saving');
+    }
+  } else {
+    console.log('Invalid conditions for saving:', {
+      hasTitle: !!editableTitle.value.trim(),
+      isProjectDetail: route.name === 'project-detail'
+    });
+  }
+  isEditingTitle.value = false;
+}
+
+function cancelEdit() {
+  isEditingTitle.value = false;
+  editableTitle.value = '';
+}
+
+function handleTitleKeydown(event) {
+  if (event.key === 'Enter') {
+    saveTitle();
+  } else if (event.key === 'Escape') {
+    cancelEdit();
+  }
+}
+
+function showCartPopover(event) {
+    overlayPanelRef.value.toggle(event);
+}
+
+// Watch for route changes to reset dynamic title when navigating away
+watch(route, (newRoute) => {
+  // Reset dynamic title when route changes, unless it's the same route with different params
+  if (newRoute.name !== 'project-detail') {
+    dynamicTitle.value = null;
+  }
+}, { immediate: true });
+
+// Create a function to build menu items based on current role
+function buildMenuItems() {
+  const baseItems = [
     {
         label: "Home",
         icon: "pi pi-home",
@@ -25,31 +139,10 @@ const items = [
         },
     },
     {
-        label: "Templates",
-        icon: "pi pi-clone",
-        command: () => {
-            router.push("/templates");
-        },
-    },
-    {
-        label: "Favorites",
-        icon: "pi pi-star",
-        command: () => {
-            router.push("/favorites");
-        },
-    },
-    {
         label: "Explore",
         icon: "pi pi-compass",
         command: () => {
             router.push("/explore");
-        },
-    },
-    {
-        label: "Projects",
-        icon: "pi pi-briefcase",
-        command: () => {
-            router.push("/projects");
         },
     },
     {
@@ -58,8 +151,46 @@ const items = [
         command: () => {
             router.push("/design-lab");
         },
+    }
+  ];
+  
+  // Add manufacturer-specific menu items
+  if (isManufacturer.value) {
+    baseItems.push({
+      label: "Order Management",
+      icon: "pi pi-list",
+      command: () => {
+          router.push("/manufacturer-orders");
+      }
+    });
+  }
+  
+  return baseItems;
+}
+
+// Initialize menu items
+menuItems.value = buildMenuItems();
+
+// Listen for role changes and update menu
+onMounted(() => {
+  const unsubscribe = useRoleDomain().onRoleChange(() => {
+    menuItems.value = buildMenuItems();
+  });
+  
+  // Cleanup on component unmount
+  onUnmounted(() => {
+    if (unsubscribe) unsubscribe();
+  });
+  
+  // Add settings to menu
+  menuItems.value.push({
+    label: "Settings",
+    icon: "pi pi-cog",
+    command: () => {
+      router.push("/settings");
     },
-];
+  });
+});
 </script>
 
 <template>
@@ -68,7 +199,38 @@ const items = [
         <section class="content">
             <Toolbar>
                 <template #start>
-                    <h2>{{ route.meta.title }}</h2>
+                    <div class="title-container">
+                        <h2 
+                            v-if="!isEditingTitle" 
+                            @dblclick="startEditingTitle"
+                            :class="{ 
+                                'editable-title': route.name === 'project-detail' && dynamicTitle && dynamicTitle.trim(),
+                                'non-editable': !(route.name === 'project-detail' && dynamicTitle && dynamicTitle.trim())
+                            }"
+                            :title="route.name === 'project-detail' && dynamicTitle && dynamicTitle.trim() ? 'Double-click to edit project name' : ''"
+                        >
+                            {{ displayTitle }}
+                        </h2>
+                        <Button
+                            v-if="!isEditingTitle && route.name === 'project-detail' && dynamicTitle && dynamicTitle.trim()"
+                            icon="pi pi-pencil"
+                            @click="startEditingTitle"
+                            class="edit-title-btn"
+                            size="small"
+                            text
+                            rounded
+                            :title="'Edit project name'"
+                        />
+                        <input
+                            v-if="isEditingTitle"
+                            v-model="editableTitle"
+                            @keydown="handleTitleKeydown"
+                            @blur="saveTitle"
+                            class="title-input"
+                            ref="titleInput"
+                            type="text"
+                        />
+                    </div>
                 </template>
                 <template #end>
                     <div class="user-menu">
@@ -84,13 +246,18 @@ const items = [
                             rounded
                             text
                             aria-label="Cart"
+                            @click="showCartPopover"
                         />
+                        <OverlayPanel ref="overlayPanelRef">
+                            <ShoppingCartPopover :user-id="currentUserId" :currency-code="currencyCode" />
+                        </OverlayPanel>
                         <Button
                             icon="pi pi-user"
                             severity="secondary"
                             rounded
                             text
-                            aria-label="User"
+                            aria-label="Profile"
+                            @click="router.push('/profile')"
                         />
                     </div>
                 </template>
@@ -98,11 +265,7 @@ const items = [
             <router-view />
         </section>
         <div class="sidebar">
-            <Menu :model="items">
-                <template #start>
-                    <div class="menu-header">Q2</div>
-                </template>
-            </Menu>
+            <Menu :model="menuItems" />
         </div>
     </main>
 </template>
@@ -136,6 +299,54 @@ main {
 .user-menu {
     display: flex;
     gap: 1rem;
+}
+
+.title-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.edit-title-btn {
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    margin-left: 0.25rem;
+}
+
+.edit-title-btn:hover {
+    opacity: 1;
+}
+
+.title-container:hover .edit-title-btn {
+    opacity: 0.8;
+}
+
+.editable-title {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.editable-title:hover {
+    background-color: var(--surface-100);
+}
+
+.non-editable {
+    cursor: default;
+}
+
+.title-input {
+    font-size: 1.5rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border: 2px solid var(--primary-color);
+    border-radius: 4px;
+    background: transparent; /* Transparent background */
+    outline: none;
+    font-family: inherit;
+    margin: 0;
+    color: inherit; /* Inherit text color from parent */
 }
 
 :deep(.p-menu),

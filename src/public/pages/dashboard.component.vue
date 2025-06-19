@@ -2,6 +2,8 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { ProjectService } from "../../design-lab/services/project.service.js";
+import { AnalyticsService } from "../../analytics/services/analytics.service.js";
+import AnalyticsStats from "../../analytics/components/AnalyticsStats.vue";
 import Card from "primevue/card";
 import Button from "primevue/button";
 import DataTable from "primevue/datatable";
@@ -14,35 +16,26 @@ const toast = useToast();
 
 const projects = ref([]);
 const loading = ref(true);
-const stats = ref({
-  totalProjects: 0,
-  blueprintProjects: 0,
-  designedGarments: 0,
-  completedProjects: 0
-});
+const analytics = ref(null);
+const userId = import.meta.env.VITE_DEFAULT_USER_ID;
 
 onMounted(async () => {
   try {
-    await loadProjects();
-    calculateStats();
+    analytics.value = await AnalyticsService.getUserAnalytics(userId);
+    const projectsData = await ProjectService.getProjects();
+    projects.value = projectsData.map(normalizeProject);
   } catch (err) {
     toast.add({
       severity: "error",
       summary: "Error",
-      detail: "Failed to load projects. Please try again.",
+      detail: "Failed to load dashboard data. Please try again.",
       life: 3000
     });
-    console.error("Error loading projects:", err);
+    console.error("Error loading dashboard data:", err);
   } finally {
     loading.value = false;
   }
 });
-
-async function loadProjects() {
-  const response = await new ProjectService().getProjects();
-  // Normalize project data to handle different naming conventions
-  projects.value = response.data.map(normalizeProject);
-}
 
 function normalizeProject(project) {
   return {
@@ -60,27 +53,14 @@ function normalizeProject(project) {
   };
 }
 
-function calculateStats() {
-  stats.value.totalProjects = projects.value.length;
-  stats.value.blueprintProjects = projects.value.filter(p => p.status === "blueprint").length;
-  stats.value.designedGarments = projects.value.filter(p => p.status === "designed-garment").length;
-  stats.value.completedProjects = projects.value.filter(p => p.status === "completed").length;
-}
-
 function getColorDisplay(color) {
   if (!color) return 'Unknown';
-  
-  // If it's a hex color, return it
   if (typeof color === 'string' && color.startsWith('#')) {
     return color;
   }
-  
-  // If it's a named color (like "black", "red")
   if (typeof color === 'string') {
-    // Capitalize the first letter of each word
     return color.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
-  
   return color.toString();
 }
 
@@ -105,37 +85,7 @@ function createNewProject() {
 <template>
   <section class="dashboard-page">
     <h1 class="dashboard-title">Design Lab Dashboard</h1>
-    
-    <div class="dashboard-stats">
-      <Card class="stat-card">
-        <template #title>Total Projects</template>
-        <template #content>
-          <div class="stat-value">{{ stats.totalProjects }}</div>
-        </template>
-      </Card>
-      
-      <Card class="stat-card">
-        <template #title>Blueprints</template>
-        <template #content>
-          <div class="stat-value">{{ stats.blueprintProjects }}</div>
-        </template>
-      </Card>
-      
-      <Card class="stat-card">
-        <template #title>Designed Garments</template>
-        <template #content>
-          <div class="stat-value">{{ stats.designedGarments }}</div>
-        </template>
-      </Card>
-      
-      <Card class="stat-card">
-        <template #title>Completed</template>
-        <template #content>
-          <div class="stat-value">{{ stats.completedProjects }}</div>
-        </template>
-      </Card>
-    </div>
-    
+    <AnalyticsStats :analytics="analytics" />
     <div class="projects-section">
       <div class="table-header">
         <h2>Your Projects</h2>
@@ -146,12 +96,11 @@ function createNewProject() {
           class="create-btn" 
         />
       </div>
-      
       <div v-if="loading" class="loading-container">
         <ProgressSpinner />
         <p>Loading projects...</p>
       </div>
-        <DataTable 
+      <DataTable 
         v-else
         :value="projects" 
         :paginator="true" 
@@ -177,7 +126,8 @@ function createNewProject() {
           <template #body="{ data }">
             <span class="capitalize-text">{{ data.genre }}</span>
           </template>
-        </Column>        <Column field="garmentColor" header="Color">
+        </Column>
+        <Column field="garmentColor" header="Color">
           <template #body="{ data }">
             <div class="color-pill">
               <span 

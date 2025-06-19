@@ -1,55 +1,88 @@
+import { DEFAULT_LAYER_STYLES, LayerType } from "../../consts";
+
 export class Layer {
-    _id;
-    _canvasId;
-    _type;
-    _zIndex;
-    _isVisible;
-    _createdAt;
-    _content;
-
-    constructor({
-        id = "",
-        canvasId = "",
-        type = "",
-        zIndex = 0,
-        isVisible = false,
-        createdAt = new Date(),
-        content = {},
-    } = {}) {
-        this._id = id;
-        this._canvasId = canvasId;
-        this._type = type;
-        this._zIndex = zIndex;
-        this._isVisible = isVisible;
-        this._createdAt = createdAt;
-        this._content = content;
+    constructor(id, x, y, zIndex, opacity, visible, type) {
+        this.id = id;
+        this.x = x;
+        this.y = y;
+        this.zIndex = zIndex;
+        this.opacity = opacity;
+        this.visible = visible;
+        this.type = type;
     }
 
-    get id() {
-        return this._id;
+    getCssStyles() {
+        throw new Error("getCssStyles method must be implemented by subclass");
     }
 
-    get canvasId() {
-        return this._canvasId;
+    getContent() {
+        throw new Error("getContent method must be implemented by subclass");
+    }
+}
+
+export class ImageLayer extends Layer {
+    constructor(id, x, y, zIndex, opacity, visible, imageUrl) {
+        super(id, x, y, zIndex, opacity, visible, LayerType.IMAGE);
+        this.imageUrl = imageUrl;
     }
 
-    get type() {
-        return this._type;
+    getCssStyles() {
+        return `position: absolute; left: ${this.x}px; top: ${
+            this.y
+        }px; z-index: ${this.zIndex}; opacity: ${this.opacity}; visibility: ${
+            this.visible ? "visible" : "hidden"
+        };`;
     }
 
-    get zIndex() {
-        return this._zIndex;
+    getContent() {
+        return this.imageUrl;
+    }
+}
+
+export class TextLayer extends Layer {
+    constructor(
+        id,
+        x,
+        y,
+        zIndex,
+        opacity,
+        visible,
+        textContent,
+        fontSize,
+        fontColor,
+        fontFamily,
+        bold,
+        italic,
+        underline
+    ) {
+        super(id, x, y, zIndex, opacity, visible, LayerType.TEXT);
+        this.textContent = textContent;
+        this.fontSize = fontSize;
+        this.fontColor = fontColor;
+        this.fontFamily = fontFamily;
+        this.bold = bold;
+        this.italic = italic;
+        this.underline = underline;
     }
 
-    get isVisible() {
-        return this._isVisible;
+    getCssStyles() {
+        let fontWeight = this.bold
+            ? DEFAULT_LAYER_STYLES.TEXT_LAYER_BOLD_VALUE
+            : DEFAULT_LAYER_STYLES.TEXT_LAYER_REGULAR_VALUE;
+        let fontStyle = this.italic ? "italic" : "normal"; // As the values wont change over time, we can hardcode them
+        let textDecoration = this.underline ? "underline" : "none";
+        return `position: absolute; left: ${this.x}px; top: ${
+            this.y
+        }px; z-index: ${this.zIndex}; opacity: ${this.opacity}; visibility: ${
+            this.visible ? "visible" : "hidden"
+        }; font-size: ${this.fontSize}px; color: ${
+            this.fontColor
+        }; font-family: ${
+            this.fontFamily
+        }; font-weight: ${fontWeight}; font-style: ${fontStyle}; text-decoration: ${textDecoration};`;
     }
 
-    get createdAt() {
-        return this._createdAt;
-    }
-
-    get content() {
-        return this._content;
+    getContent() {
+        return this.textContent;
     }
 }
