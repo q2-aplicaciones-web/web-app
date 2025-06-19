@@ -7,11 +7,21 @@ import Toolbar from "primevue/toolbar";
 import Toast from "primevue/toast";
 import OverlayPanel from "primevue/overlaypanel";
 import { useRouter, useRoute } from "vue-router";
-import { ref, computed, provide, watch, nextTick, getCurrentInstance } from "vue";
+import { ref, computed, provide, watch, nextTick, getCurrentInstance, onMounted, onUnmounted } from "vue";
 import ShoppingCartPopover from "./orders-processing/components/shopping-cart-popover.vue";
+import { useRoleDomain } from "./access-security/services/role-domain.service";
 
 const router = useRouter();
 const route = useRoute();
+const { currentRole, hasPermission, ROLES } = useRoleDomain();
+
+// Check if user has manufacturer role
+const isManufacturer = computed(() => {
+  return currentRole.value === ROLES.MANUFACTURER || currentRole.value === ROLES.ADMIN;
+});
+
+// Setup reactivity for menu based on role changes
+const menuItems = ref([]);
 
 // Create a reactive title reference
 const dynamicTitle = ref(null);
@@ -111,7 +121,9 @@ watch(route, (newRoute) => {
   }
 }, { immediate: true });
 
-const items = [
+// Create a function to build menu items based on current role
+function buildMenuItems() {
+  const baseItems = [
     {
         label: "Home",
         icon: "pi pi-home",
@@ -139,22 +151,46 @@ const items = [
         command: () => {
             router.push("/design-lab");
         },
+    }
+  ];
+  
+  // Add manufacturer-specific menu items
+  if (isManufacturer.value) {
+    baseItems.push({
+      label: "Order Management",
+      icon: "pi pi-list",
+      command: () => {
+          router.push("/manufacturer-orders");
+      }
+    });
+  }
+  
+  return baseItems;
+}
+
+// Initialize menu items
+menuItems.value = buildMenuItems();
+
+// Listen for role changes and update menu
+onMounted(() => {
+  const unsubscribe = useRoleDomain().onRoleChange(() => {
+    menuItems.value = buildMenuItems();
+  });
+  
+  // Cleanup on component unmount
+  onUnmounted(() => {
+    if (unsubscribe) unsubscribe();
+  });
+  
+  // Add settings to menu
+  menuItems.value.push({
+    label: "Settings",
+    icon: "pi pi-cog",
+    command: () => {
+      router.push("/settings");
     },
-    {
-        label: "Order Management",
-        icon: "pi pi-list",
-        command: () => {
-            router.push("/manufacturer-orders");
-        },
-    },
-    {
-        label: "Settings",
-        icon: "pi pi-cog",
-        command: () => {
-            router.push("/settings");
-        },
-    },
-];
+  });
+});
 </script>
 
 <template>
@@ -229,7 +265,7 @@ const items = [
             <router-view />
         </section>
         <div class="sidebar">
-            <Menu :model="items" />
+            <Menu :model="menuItems" />
         </div>
     </main>
 </template>

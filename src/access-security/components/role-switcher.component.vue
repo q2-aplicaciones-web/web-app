@@ -1,7 +1,7 @@
 <template>
   <div class="role-switcher-container">
     <div class="role-switcher-card p-card custom-card-bg">
-      <h2 class="p-card-title">Change Role <span class="subtitle">(For testing only)</span></h2>
+      <h2 class="p-card-title">Change Role</h2>
       <div class="info-row">
         <span>Current user:</span>
         <b>{{ currentUserDisplay }}</b>
@@ -10,24 +10,34 @@
         <span>Current role:</span>
         <b>{{ currentRoleDisplay }}</b>
       </div>
-      <div class="access-row p-message p-message-info">
-        <span>You have access to: <b>Design Lab, Analytics</b>, etc.</span>
+      
+      <div class="access-row">
+        <span v-if="isCustomer"><b>Access:</b> Design Lab, Shopping Cart</span>
+        <span v-else-if="isManufacturer"><b>Access:</b> Manufacturing Dashboard, Orders</span>
+        <span v-else>Select a role to view access</span>
       </div>
+      
       <div class="button-row">
         <Button
-          :label="'Customer (Alice)'"
-          :class="['custom-btn-customer', { 'p-button-outlined': !isCustomer, 'p-button-success': isCustomer }]"
+          label="Customer"
+          :class="['role-btn', { active: isCustomer }]"
           :disabled="isCustomer || loading"
           @click="switchToCustomer"
-          style="min-width: 150px"
-        />
+        >
+          <template #icon>
+            <i class="pi pi-user mr-2"></i>
+          </template>
+        </Button>
         <Button
-          :label="'Manufacturer (Bob)'"
-          :class="['custom-btn-manufacturer', { 'p-button-outlined': !isManufacturer, 'p-button-success': isManufacturer }]"
+          label="Manufacturer"
+          :class="['role-btn', { active: isManufacturer }]"
           :disabled="isManufacturer || loading"
           @click="switchToManufacturer"
-          style="min-width: 150px"
-        />
+        >
+          <template #icon>
+            <i class="pi pi-cog mr-2"></i>
+          </template>
+        </Button>
       </div>
     </div>
   </div>
@@ -38,25 +48,63 @@ import { ref, computed, watchEffect } from 'vue';
 import { useUserDomain } from '../services/user-domain.service.js';
 import { useRoleDomain } from '../services/role-domain.service.js';
 import { UserService } from '../../user_management/services/user.service';
+import { useRouter } from 'vue-router';
 import Button from 'primevue/button';
 
-const { currentUser, setUser, setRole: setUserRole } = useUserDomain();
+const { currentUser, setUser } = useUserDomain();
 const { currentRole, setRole } = useRoleDomain();
+const router = useRouter();
 
+// Define available roles
+const ROLES = {
+  CUSTOMER: 'customer',
+  MANUFACTURER: 'manufacturer'
+};
+
+// Import environment variables
+import { env } from '../../env';
+
+// Define users with proper role mapping - use environment variables when available
 const users = [
-  { id: 'user-1', name: 'Alice', role: 'Customer' },
-  { id: 'user-2', name: 'Bob', role: 'Manufacturer' },
+  { id: env.customerUserId || 'user-1', name: 'Alice', role: ROLES.CUSTOMER },
+  { id: env.manufacturerUserId || 'user-2', name: 'Bob', role: ROLES.MANUFACTURER },
 ];
 
 const loading = ref(false);
 
+/**
+ * Switch to a different user with a specific role
+ * @param {Object} user - User object with id and role
+ */
 async function switchUser(user) {
   loading.value = true;
+  
   try {
+    // Get user entity from backend
     const userEntity = await UserService.getUserById(user.id);
+    
+    // Ensure the role is set correctly
+    const normalizedRole = user.role.toLowerCase();
+    
+    // Update both user domain and role domain states
     setUser(userEntity);
-    setUserRole(user.role);
-    setRole(user.role);
+    setRole(normalizedRole);
+    
+    // Force a route refresh to update the UI based on new role
+    const currentRoute = router.currentRoute.value;
+    
+    // If we're on a protected route and switching to a role that can't access it,
+    // navigate to home
+    if (currentRoute.meta.requiresManufacturer && 
+        normalizedRole !== ROLES.MANUFACTURER && 
+        normalizedRole !== 'admin') {
+      await router.push(env.defaultRedirectPath || '/home');
+    } else {
+      // Otherwise refresh the current route to update UI
+      await router.replace({ path: currentRoute.path, query: { ...currentRoute.query, _: Date.now() } });
+    }
+  } catch (error) {
+    console.error('Error switching user:', error);
   } finally {
     loading.value = false;
   }
@@ -65,22 +113,36 @@ async function switchUser(user) {
 function switchToCustomer() {
   switchUser(users[0]);
 }
+
 function switchToManufacturer() {
   switchUser(users[1]);
 }
 
-const isCustomer = computed(() => currentUser.value && currentUser.value.rol === 'Customer');
-const isManufacturer = computed(() => currentUser.value && currentUser.value.rol === 'Manufacturer');
+// Computed properties for UI state
+const isCustomer = computed(() => 
+  currentUser.value && currentUser.value.rol?.toLowerCase() === ROLES.CUSTOMER
+);
+
+const isManufacturer = computed(() => 
+  currentUser.value && currentUser.value.rol?.toLowerCase() === ROLES.MANUFACTURER
+);
 
 const currentUserDisplay = computed(() => {
   if (!currentUser.value) return '';
-  // Usar getters de la clase User y Profile
-  const name = currentUser.value.profile?.getFullName?.() || currentUser.value.profile?.firstName || '';
-  return `${currentUser.value.id || currentUser.value._id || 'undefined'} (${name})`;
+  
+  const name = currentUser.value.profile?.getFullName?.() || 
+               currentUser.value.profile?.firstName || 
+               'Unknown';
+               
+  return name;
 });
-const currentRoleDisplay = computed(() => currentUser.value?.rol || currentRole.value || '');
 
-// On mount, load default user if not set
+const currentRoleDisplay = computed(() => {
+  const role = currentUser.value?.rol || currentRole.value || '';
+  return role.charAt(0).toUpperCase() + role.slice(1); // Capitalize first letter
+});
+
+// Load default user if not set
 watchEffect(async () => {
   if (!currentUser.value) {
     await switchUser(users[0]);
@@ -93,61 +155,38 @@ watchEffect(async () => {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  margin-top: 60px;
+  margin-top: 20px;
 }
 .role-switcher-card {
-  min-width: 380px;
-  max-width: 420px;
-  padding: 32px 32px 16px 32px;
+  width: 300px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 .custom-card-bg {
-  background: #1e1e1e !important;
+  background: #1e1e1e;
   border: 1px solid #2e2e2e;
 }
-.subtitle {
-  font-size: 0.8em;
-  color: var(--text-color-secondary, #888);
-}
 .info-row {
-  margin: 16px 0 0 0;
-  font-size: 1.1em;
+  margin: 10px 0;
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 .access-row {
-  margin: 18px 0 0 0;
-  border-radius: 6px;
-  font-size: 1em;
-  color: var(--text-color, #9c9c9c);
-  padding: 8px 12px;
-}
-.access-list b {
-  font-weight: 700;
+  margin: 15px 0;
+  font-size: 0.9em;
+  color: #9c9c9c;
 }
 .button-row {
   display: flex;
-  gap: 16px;
-  margin-top: 28px;
-  padding-bottom: 8px;
+  gap: 10px;
+  margin-top: 15px;
 }
-.custom-btn-customer.p-button {
-  background: #009688;
-  border-color: #009688;
-  color: #fff;
+.role-btn {
+  flex: 1;
 }
-.custom-btn-customer.p-button.p-button-outlined {
-  background: transparent;
-  color: #009688;
-  border-color: #009688;
-}
-.custom-btn-manufacturer.p-button {
-  background: #388e3c;
-  border-color: #388e3c;
-  color: #fff;
-}
-.custom-btn-manufacturer.p-button.p-button-outlined {
-  background: transparent;
-  color: #388e3c;
-  border-color: #388e3c;
+.role-btn.active {
+  background-color: #4caf50;
+  border-color: #4caf50;
 }
 </style>

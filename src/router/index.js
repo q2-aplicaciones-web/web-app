@@ -3,6 +3,9 @@ import HomeComponent from "../public/pages/home.component.vue";
 import CreateProjectComponent from "../design-lab/components/create-project.component.vue";
 import DashboardComponent from "../public/pages/dashboard.component.vue";
 import ShoppingCartComponent from "../public/pages/shopping-cart.component.vue";
+import { useRoleDomain, ROLE_NAMES } from "../access-security/services/role-domain.service";
+import { useToast } from "primevue/usetoast";
+import { env } from "../env";
 
 const DesignLabComponent = () =>
     import("../public/pages/design-lab.component.vue");
@@ -68,7 +71,10 @@ const routes = [
         path: "/manufacturer-orders",
         name: "manufacturer-orders",
         component: ManufacturerOrdersPageComponent,
-        meta: { title: "Order Management" },
+        meta: { 
+            title: "Order Management",
+            requiresManufacturer: true
+        },
     },
     { path: "/", name: "default", redirect: "/home" },
 ];
@@ -81,6 +87,34 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     let baseTitle = "Q2";
     document.title = `${baseTitle} | ${to.meta["title"]}`;
+
+    // Check for routes that require manufacturer role
+    if (to.matched.some(record => record.meta.requiresManufacturer)) {
+        const { getCurrentRole, ROLES } = useRoleDomain();
+        
+        // Check if the current role can access this route
+        if (getCurrentRole() !== ROLE_NAMES.MANUFACTURER && getCurrentRole() !== ROLE_NAMES.ADMIN) {
+            // Redirect to home if not authorized
+            console.warn('Access denied: Manufacturer role required');
+            
+            // Create a notification for the user
+            setTimeout(() => {
+                const toast = useToast();
+                if (toast) {
+                    toast.add({
+                        severity: 'warn',
+                        summary: 'Access Restricted',
+                        detail: 'You need manufacturer privileges to access this area',
+                        life: 5000
+                    });
+                }
+            }, 100);
+            
+            next({ path: env.defaultRedirectPath || '/home' });
+            return;
+        }
+    }
+    
     next();
 });
 
