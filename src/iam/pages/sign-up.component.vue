@@ -1,118 +1,78 @@
 <template>
   <div class="signup-container">
-    <div class="signup-card">
-      <!-- Header -->
-      <div class="signup-header">
-        <h1 class="signup-title">Create Account</h1>
-        <p class="signup-subtitle">Join Q2</p>
-      </div>
-
-      <!-- Sign Up Form -->
-      <form @submit.prevent="handleSignUp" class="signup-form">
-        <!-- Username Field -->
-        <div class="form-field">
-          <label for="username" class="form-label">Username</label>
-          <div class="input-container">
-            <input
-              id="username"
-              v-model="formData.username"
-              type="text"
-              class="form-input"
-              :class="{ 'error': errors.username }"
-              placeholder="Choose a username"
-              autocomplete="username"
-              :disabled="isLoading"
-              required
+    <Card class="signup-card" contentClass="signup-card-content">
+      <template #content>
+        <div class="signup-header">
+          <h1 class="signup-title">Create Account</h1>
+          <p class="signup-subtitle">Join Q2</p>
+        </div>
+        <form @submit.prevent="handleSignUp" class="signup-form">
+          <div class="p-fluid">
+            <div class="p-field" style="margin-bottom: 1.5rem;">
+              <label for="username">Username</label>
+              <InputText
+                id="username"
+                v-model="formData.username"
+                :class="{ 'p-invalid': errors.username }"
+                placeholder="Choose a username"
+                autocomplete="username"
+                :disabled="isLoading"
+                required
+              />
+              <small v-if="errors.username" class="p-error">Username is required</small>
+            </div>
+            <div class="p-field" style="margin-bottom: 1.5rem;">
+              <label for="password">Password</label>
+              <Password
+                id="password"
+                v-model="formData.password"
+                :feedback="false"
+                :toggleMask="true"
+                :inputStyle="{ width: '100%' }"
+                :class="{ 'p-invalid': errors.password }"
+                placeholder="Create a password"
+                autocomplete="new-password"
+                :disabled="isLoading"
+                required
+              />
+              <small v-if="errors.password" class="p-error">Password is required</small>
+            </div>
+            <div class="p-field" style="margin-bottom: 1.5rem;">
+              <label for="confirmPassword">Confirm Password</label>
+              <Password
+                id="confirmPassword"
+                v-model="formData.confirmPassword"
+                :feedback="false"
+                :toggleMask="true"
+                :inputStyle="{ width: '100%' }"
+                :class="{ 'p-invalid': errors.confirmPassword }"
+                placeholder="Confirm your password"
+                autocomplete="new-password"
+                :disabled="isLoading"
+                required
+              />
+              <small v-if="errors.confirmPassword" class="p-error">Passwords do not match</small>
+            </div>
+            <Message v-if="errorMessage" severity="error">Registration failed. Please try again.</Message>
+            <Message v-if="successMessage" severity="success">Account created successfully!</Message>
+            <Button
+              type="submit"
+              :label="isLoading ? 'Creating Account...' : 'Create Account'"
+              :loading="isLoading"
+              :disabled="isLoading || !isFormValid"
+              icon="pi pi-user-plus"
+              class="w-full mt-3"
             />
           </div>
-          <div v-if="errors.username" class="error-message">Username is required</div>
+        </form>
+        <div class="signup-footer mt-4" style="text-align:center;">
+          <span>
+            Already have an account?
+            <router-link to="/sign-in" class="signin-link">Sign in here</router-link>
+          </span>
         </div>
-
-        <!-- Password Field -->
-        <div class="form-field">
-          <label for="password" class="form-label">Password</label>
-          <div class="input-container">
-            <input
-              id="password"
-              v-model="formData.password"
-              :type="showPassword ? 'text' : 'password'"
-              class="form-input"
-              :class="{ 'error': errors.password }"
-              placeholder="Create a password"
-              autocomplete="new-password"
-              :disabled="isLoading"
-              required
-            />
-            <button
-              type="button"
-              @click="togglePasswordVisibility"
-              class="password-toggle"
-              :disabled="isLoading"
-              aria-label="Toggle password visibility"
-            >
-              Show
-            </button>
-          </div>
-          <div v-if="errors.password" class="error-message">Password is required</div>
-        </div>
-
-        <!-- Confirm Password Field -->
-        <div class="form-field">
-          <label for="confirmPassword" class="form-label">Confirm Password</label>
-          <div class="input-container">
-            <input
-              id="confirmPassword"
-              v-model="formData.confirmPassword"
-              :type="showConfirmPassword ? 'text' : 'password'"
-              class="form-input"
-              :class="{ 'error': errors.confirmPassword }"
-              placeholder="Confirm your password"
-              autocomplete="new-password"
-              :disabled="isLoading"
-              required
-            />
-            <button
-              type="button"
-              @click="toggleConfirmPasswordVisibility"
-              class="password-toggle"
-              :disabled="isLoading"
-              aria-label="Toggle confirm password visibility"
-            >
-              Show
-            </button>
-          </div>
-          <div v-if="errors.confirmPassword" class="error-message">Passwords do not match</div>
-        </div>
-
-        <!-- Error Message -->
-        <div v-if="errorMessage" class="alert alert-error">
-          Registration failed. Please try again.
-        </div>
-
-        <!-- Success Message -->
-        <div v-if="successMessage" class="alert alert-success">
-          Account created successfully!
-        </div>
-
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="signup-button"
-          :disabled="isLoading || !isFormValid"
-        >
-          <span v-if="isLoading" class="loading-spinner">Creating Account...</span>
-          <span v-else>Create Account</span>
-        </button>
-      </form>
-
-      <!-- Footer -->
-      <div class="signup-footer">
-        <p class="signin-prompt">
-          Already have an account?
-          <router-link to="/sign-in" class="signin-link">Sign in here</router-link>
-        </p>
-      </div>
-    </div>
+      </template>
+    </Card>
   </div>
 </template>
 
@@ -121,6 +81,11 @@ import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { authenticationService } from '../services/authentication.service.js';
 import { SignUpRequest } from '../model/sign-up.request.js';
+import InputText from 'primevue/inputtext';
+import Password from 'primevue/password';
+import Button from 'primevue/button';
+import Message from 'primevue/message';
+import Card from 'primevue/card';
 
 // Router composable
 const router = useRouter();
@@ -268,216 +233,61 @@ if (authenticationService.isSignedIn.value) {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
 }
-
 .signup-card {
-  background: rgb(39, 39, 39);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 480px;
-  overflow: hidden;
+  max-width: 420px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  border: none;
 }
-
+.signup-card-content {
+  padding: 2.5rem 2rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
 .signup-header {
-  padding: 30px 30px 20px;
-  text-align: center;
-  background: rgb(39, 39, 39);
+  margin-bottom: 2rem;
 }
-
 .signup-title {
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0 0 8px;
-  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
 }
-
 .signup-subtitle {
-  font-size: 14px;
-  color: #ffffff;
-  margin: 0;
+  font-size: 1.1rem;
+  color: #b0b0b0;
 }
-
 .signup-form {
-  padding: 30px;
-}
-
-.form-field {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  font-weight: 500;
-  color: #ffffff;
-  font-size: 14px;
-  margin-bottom: 6px;
-}
-
-.input-container {
-  position: relative;
-}
-
-.form-input {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 16px;
-  transition: border-color 0.2s ease;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.p-fluid > .p-field {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.p-field label {
+  margin-bottom: 0.5rem;
+}
+.p-field input,
+.p-field .p-inputtext,
+.p-field .p-password {
+  width: 100% !important;
   box-sizing: border-box;
 }
-
-.form-input:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.form-input.error {
-  border-color: #dc3545;
-}
-
-.form-input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #666;
-  padding: 4px;
-}
-
-.password-toggle:hover:not(:disabled) {
-  color: #007bff;
-}
-
-.password-toggle:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error-message {
-  color: #dc3545;
-  font-size: 13px;
-  margin-top: 4px;
-}
-
-.info-message {
-  padding: 12px 16px;
-  border-radius: 6px;
-  background-color: #e3f2fd;
-  border: 1px solid #bbdefb;
-  color: #1565c0;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-.info-message p {
-  margin: 0;
-}
-
-.alert {
-  padding: 12px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-.alert-error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.alert-success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.signup-button {
-  width: 100%;
-  background-color: #28a745;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.signup-button:hover:not(:disabled) {
-  background-color: #218838;
-}
-
-.signup-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.loading-spinner {
-  display: inline-block;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.signup-footer {
-  padding: 20px 30px 30px;
-  text-align: center;
-  background: rgb(39, 39, 39);
-}
-
-.signin-prompt {
-  color: #666;
-  font-size: 14px;
-  margin: 0;
-}
-
 .signin-link {
   color: #007bff;
   text-decoration: none;
   font-weight: 500;
 }
-
 .signin-link:hover {
   text-decoration: underline;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 480px) {
-  .signup-container {
-    padding: 16px;
-  }
-  
-  .signup-header {
-    padding: 24px 20px 16px;
-  }
-  
-  .signup-form {
-    padding: 24px 20px;
-  }
-  
-  .signup-footer {
-    padding: 16px 20px 24px;
-  }
-  
-  .signup-title {
-    font-size: 20px;
-  }
 }
 </style>

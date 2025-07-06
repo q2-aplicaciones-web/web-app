@@ -132,7 +132,10 @@ function updateCartOnServer() {
 }
 
 onMounted(async () => {
-  userId.value = authenticationService.currentUserId.value || import.meta.env.VITE_DEFAULT_USER_ID;
+  userId.value = authenticationService.currentUserId.value;
+  if (!userId.value) {
+    throw new Error('User must be authenticated to access shopping cart');
+  }
   await loadCart();
 });
 </script>

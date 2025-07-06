@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { ProjectService } from "../../design-lab/services/project.service.js";
+import { useProjects } from "../../design-lab/composables/useProjects.js";
 import { AnalyticsService } from "../../analytics/services/analytics.service.js";
 import AnalyticsStats from "../../analytics/components/AnalyticsStats.vue";
 import Card from "primevue/card";
@@ -14,16 +14,15 @@ import { useToast } from "primevue/usetoast";
 const router = useRouter();
 const toast = useToast();
 
-const projects = ref([]);
-const loading = ref(true);
+// Use projects composable instead of direct service
+const { projects, loading, loadProjects } = useProjects();
 const analytics = ref(null);
-const userId = import.meta.env.VITE_DEFAULT_USER_ID;
+const userId = authenticationService.currentUserId.value;
 
 onMounted(async () => {
   try {
     analytics.value = await AnalyticsService.getUserAnalytics(userId);
-    const projectsData = await ProjectService.getProjects();
-    projects.value = projectsData.map(normalizeProject);
+    await loadProjects(userId);
   } catch (err) {
     toast.add({
       severity: "error",
@@ -32,8 +31,6 @@ onMounted(async () => {
       life: 3000
     });
     console.error("Error loading dashboard data:", err);
-  } finally {
-    loading.value = false;
   }
 });
 
