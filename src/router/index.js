@@ -18,6 +18,8 @@ const ExplorePageComponent = () =>
     import("../public/pages/explore.component.vue");
 const ManufacturerOrdersPageComponent = () =>
     import("../public/pages/manufacturer-orders-page.component.vue");
+const SettingsComponent = () =>
+    import("../public/pages/settings.component.vue");
 
 // IAM Components
 const SignInComponent = () =>
@@ -26,6 +28,13 @@ const SignUpComponent = () =>
     import("../iam/pages/sign-up.component.vue");
 
 const routes = [
+    {
+        path: "/settings",
+        name: "settings",
+        component: SettingsComponent,
+        meta: { title: "Settings" },
+        beforeEnter: authenticationGuard
+    },
     // 🌐 Public routes (no authentication required)
     {
         path: "/sign-in",

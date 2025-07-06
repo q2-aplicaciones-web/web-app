@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import env from '../../env.js';
 import { useRouter } from "vue-router";
 import { useProjects } from "../../design-lab/composables/useProjects.js";
 import { AnalyticsService } from "../../analytics/services/analytics.service.js";
@@ -13,6 +14,9 @@ import { useToast } from "primevue/usetoast";
 
 const router = useRouter();
 const toast = useToast();
+
+// Stripe public key for frontend usage
+const stripePublicKey = env.stripePublicKey;
 
 // Use projects composable instead of direct service
 const { projects, loading, loadProjects } = useProjects();
