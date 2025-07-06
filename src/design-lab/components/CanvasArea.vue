@@ -27,7 +27,7 @@
           class="text-layer"
           :style="getTextStyle(layer)"
         >
-          {{ layer.text || 'Text Layer' }}
+          {{ layer.text || t('designLab.canvas.textLayer') }}
         </div>
 
         <!-- Image Layer -->
@@ -38,12 +38,12 @@
           <img
             v-if="layer.imageUrl"
             :src="layer.imageUrl"
-            :alt="layer.name || 'Image layer'"
+            :alt="layer.name || t('designLab.canvas.imageLayer')"
             :style="getImageStyle(layer)"
             draggable="false"
           />
           <div v-else class="image-placeholder">
-            🖼 No Image
+            🖼 {{ t('designLab.canvas.noImage') }}
           </div>
         </div>
 
@@ -59,10 +59,10 @@
       <!-- Canvas Info Overlay -->
       <div v-if="layers.length === 0" class="canvas-empty">
         <div class="empty-message">
-          <h4>Design Canvas</h4>
-          <p>Add text or image layers to start designing</p>
+          <h4>{{ t('designLab.canvas.designCanvas') }}</h4>
+          <p>{{ t('designLab.canvas.addLayersMessage') }}</p>
           <div class="garment-info">
-            <span>Garment Color: {{ getCurrentColorName() }}</span>
+            <span>{{ t('designLab.canvas.garmentColor') }}: {{ getCurrentColorName() }}</span>
           </div>
         </div>
       </div>
@@ -70,23 +70,23 @@
       <!-- Canvas Controls (moved inside garment-background for single canvas) -->
       <div class="canvas-controls">
         <div class="zoom-controls">
-          <button @click="zoomOut" class="btn btn-icon" title="Zoom Out">-</button>
+          <button @click="zoomOut" class="btn btn-icon" :title="t('designLab.canvas.zoomOut')">-</button>
           <span class="zoom-level">{{ Math.round(zoom * 100) }}%</span>
-          <button @click="zoomIn" class="btn btn-icon" title="Zoom In">+</button>
-          <button @click="resetZoom" class="btn btn-small" title="Reset Zoom">Reset</button>
+          <button @click="zoomIn" class="btn btn-icon" :title="t('designLab.canvas.zoomIn')">+</button>
+          <button @click="resetZoom" class="btn btn-small" :title="t('designLab.canvas.resetZoom')">{{ t('designLab.canvas.reset') }}</button>
         </div>
         <div class="canvas-info">
-          <span>{{ layers.length }} layer{{ layers.length !== 1 ? 's' : '' }}</span>
-          <span v-if="selectedLayer">• Selected: {{ getLayerDisplayName(selectedLayer) }}</span>
+          <span>{{ layers.length }} {{ layers.length === 1 ? t('designLab.layer') : t('designLab.layers') }}</span>
+          <span v-if="selectedLayer">• {{ t('designLab.canvas.selected') }}: {{ getLayerDisplayName(selectedLayer) }}</span>
         </div>
       </div>
     </div>
 
     <!-- Quick Actions -->
     <div class="quick-actions">
-      <button @click="centerAllLayers" class="btn btn-small">Center All</button>
-      <button @click="clearSelection" class="btn btn-small">Clear Selection</button>
-      <button @click="exportCanvas" class="btn btn-small btn-primary">Export</button>
+      <button @click="centerAllLayers" class="btn btn-small">{{ t('designLab.canvas.centerAll') }}</button>
+      <button @click="clearSelection" class="btn btn-small">{{ t('designLab.canvas.clearSelection') }}</button>
+      <button @click="exportCanvas" class="btn btn-small btn-primary">{{ t('designLab.canvas.export') }}</button>
     </div>
   </div>
 </template>
@@ -94,6 +94,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useGarmentColors } from '../composables/useGarmentColors.js'
+import { useI18n } from 'vue-i18n'
 
 // Props
 defineProps({
@@ -130,6 +131,9 @@ const resizeHandle = ref('')
 
 // Garment colors composable
 const { getColorByValue, getColorStyle } = useGarmentColors()
+
+// i18n
+const { t } = useI18n()
 
 // Computed properties
 const visibleLayers = computed(() => {
@@ -209,12 +213,12 @@ const getImageStyle = (layer) => {
 
 const getLayerDisplayName = (layer) => {
   if (layer.name) return layer.name
-  return layer.type === 'text' ? 'Text Layer' : 'Image Layer'
+  return layer.type === 'text' ? t('designLab.canvas.textLayer') : t('designLab.canvas.imageLayer')
 }
 
 const getCurrentColorName = () => {
   const color = getColorByValue(props.project?.garmentColor)
-  return color ? color.label.replace('-', ' ') : 'Unknown'
+  return color ? color.label.replace('-', ' ') : t('designLab.canvas.unknown')
 }
 
 // Drag functionality
@@ -388,7 +392,7 @@ const exportCanvas = () => {
   
   // This is a basic implementation
   // In a real app, you'd render all layers properly
-  alert('Export functionality would be implemented here')
+  alert(t('designLab.canvas.exportNotImplemented'))
 }
 
 // Cleanup

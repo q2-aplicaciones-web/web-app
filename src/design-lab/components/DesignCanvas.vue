@@ -37,9 +37,9 @@
         <InputText v-model="textInput" placeholder="Texto" class="minimal-input" style="flex: 1;" />
       </div>
       <div class="prime-row minimal-row" >
-        <Dropdown v-model="fontFamily" :options="fontOptions" class="minimal-input" optionLabel="label" optionValue="value" />
+        <Select v-model="fontFamily" :options="fontOptions" class="minimal-input" optionLabel="label" optionValue="value" />
         <InputNumber v-model="fontSize" :min="10" :max="100" class="minimal-input" style="width:auto; margin-right: 8px;" />
-        <ColorPicker v-model="fontColor" class="minimal-input" />
+        <Select v-model="fontColor" :options="colorOptions" class="minimal-input" optionLabel="label" optionValue="value" />
         <Button icon="pi pi-plus" class="prime-btn minimal-btn" @click="addTextLayer" />
       </div>
     </div>
@@ -53,14 +53,14 @@
 import Button from 'primevue/button';
 import FileUpload from 'primevue/fileupload';
 import InputText from 'primevue/inputtext';
-import ColorPicker from 'primevue/colorpicker';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import InputNumber from 'primevue/inputnumber';
 import ContextMenu from 'primevue/contextmenu';
-import designLabService from '../services/design-lab.service.js';
+import designLabService from '../services/design-lab.service.js'
+import cloudinaryService from '../services/cloudinary.service.js';
 export default {
   name: 'DesignCanvas',
-  components: { Button, FileUpload, InputText, ColorPicker, Dropdown, InputNumber, ContextMenu },
+  components: { Button, FileUpload, InputText, Select, InputNumber, ContextMenu },
   props: {
     projectId: { type: String, required: true },
     layers: { type: Array, required: true },
@@ -68,24 +68,6 @@ export default {
   },
   data() {
     return {
-      garmentColors: [
-        { name: 'Black', hex: '#161615' },
-        { name: 'Gray', hex: '#403D3B' },
-        { name: 'LightGray', hex: '#B3B1AF' },
-        { name: 'White', hex: '#EDEDED' },
-        { name: 'Red', hex: '#B51B14' },
-        { name: 'Pink', hex: '#F459B0' },
-        { name: 'LightPurple', hex: '#D890E4' },
-        { name: 'Purple', hex: '#693FA0' },
-        { name: 'LightBlue', hex: '#00A5BC' },
-        { name: 'Cyan', hex: '#31B7C9' },
-        { name: 'SkyBlue', hex: '#3F9BDC' },
-        { name: 'Blue', hex: '#1B3D92' },
-        { name: 'Green', hex: '#1B8937' },
-        { name: 'LightGreen', hex: '#5BBE65' },
-        { name: 'Yellow', hex: '#FECD08' },
-        { name: 'DarkYellow', hex: '#F2AB00' }
-      ],
       textInput: '',
       fontColor: '#000000',
       fontFamily: 'Arial',
@@ -116,6 +98,28 @@ export default {
         { label: 'Verdana', value: 'Verdana' },
         { label: 'Times New Roman', value: 'Times New Roman' }
       ],
+      colorOptions: [
+        { label: 'Black', value: '#000000' },
+        { label: 'White', value: '#FFFFFF' },
+        { label: 'Red', value: '#FF0000' },
+        { label: 'Green', value: '#008000' },
+        { label: 'Blue', value: '#0000FF' },
+        { label: 'Yellow', value: '#FFFF00' },
+        { label: 'Orange', value: '#FFA500' },
+        { label: 'Purple', value: '#800080' },
+        { label: 'Pink', value: '#FFC0CB' },
+        { label: 'Brown', value: '#A52A2A' },
+        { label: 'Gray', value: '#808080' },
+        { label: 'Light Gray', value: '#D3D3D3' },
+        { label: 'Dark Gray', value: '#404040' },
+        { label: 'Navy', value: '#000080' },
+        { label: 'Teal', value: '#008080' },
+        { label: 'Lime', value: '#00FF00' },
+        { label: 'Cyan', value: '#00FFFF' },
+        { label: 'Magenta', value: '#FF00FF' },
+        { label: 'Maroon', value: '#800000' },
+        { label: 'Olive', value: '#808000' }
+      ],
     };
   },
   mounted() {
@@ -131,7 +135,7 @@ export default {
       return this.projectColor;
     },
     selectedColorHex() {
-      const color = this.garmentColors.find(c => c.name === this.currentColor);
+      const color = cloudinaryService.getGarmentColorByLabel(this.currentColor);
       return color ? color.hex : '#EDEDED';
     },
     canvasSpriteStyle() {
@@ -357,6 +361,13 @@ export default {
         this.uploadError = 'El texto no puede estar vacío';
         return;
       }
+      
+      // Ensure fontColor is a valid hex color
+      let validFontColor = this.fontColor;
+      if (!validFontColor || typeof validFontColor !== 'string' || !validFontColor.startsWith('#')) {
+        validFontColor = '#000000'; // Default to black
+      }
+      
       // Center the text in the canvas
       const canvas = this.$el.querySelector('.canvas-area');
       const rect = canvas.getBoundingClientRect();
@@ -366,7 +377,7 @@ export default {
       const y = Math.max(0, Math.round((rect.height - height) / 2));
       const body = {
         text: String(this.textInput),
-        fontColor: String(this.fontColor),
+        fontColor: String(validFontColor),
         fontFamily: String(this.fontFamily),
         fontSize: Number(this.fontSize),
         isBold: false,

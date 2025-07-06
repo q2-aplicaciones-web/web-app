@@ -26,7 +26,7 @@
         <!-- Garment Color Selection -->
         <div class="form-group">
           <label for="color">Garment Color</label>
-          <Dropdown
+          <Select
             id="color"
             v-model="formData.garmentColor"
             :options="colorOptions"
@@ -42,7 +42,7 @@
         <!-- Garment Size -->
         <div class="form-group">
           <label for="size">Size</label>
-          <Dropdown
+          <Select
             id="size"
             v-model="formData.garmentSize"
             :options="sizeOptions"
@@ -58,7 +58,7 @@
         <!-- Gender -->
         <div class="form-group">
           <label for="gender">Gender</label>
-          <Dropdown
+          <Select
             id="gender"
             v-model="formData.garmentGender"
             :options="genderOptions"
@@ -104,7 +104,7 @@ import { useRouter } from 'vue-router'
 import { useProjects } from '../composables/useProjects.js'
 import { GARMENT_COLOR, getGarmentGenderOptions, getGarmentSizeOptions, getGarmentColorOptions } from '../../consts.js'
 import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Button from 'primevue/button'
 
 const router = useRouter()

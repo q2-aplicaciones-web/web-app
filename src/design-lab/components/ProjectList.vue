@@ -47,7 +47,7 @@
           <div class="project-preview">
             <div 
               class="garment-preview"
-              :style="getGarmentColorStyle(project.garmentColor)"
+              :style="getGarmentColorStyle(project.color)"
             ></div>
           </div>
 
@@ -55,8 +55,8 @@
           <div class="project-info">
             <h3 class="project-title">{{ project.title }}</h3>
             <div class="project-meta">
-              <span class="project-size">{{ project.garmentSize }}</span>
-              <span class="project-gender">{{ project.garmentGender }}</span>
+              <span class="project-size">{{ project.size }}</span>
+              <span class="project-gender">{{ project.gender }}</span>
             </div>
             <div class="project-dates">
               <span class="created-date">Created: {{ formatDate(project.createdAt) }}</span>
@@ -68,6 +68,14 @@
 
           <!-- Project Actions -->
           <div class="project-actions" @click.stop>
+            <Button 
+              label="Create Product"
+              icon="pi pi-shopping-bag"
+              severity="success"
+              size="small"
+              @click="openProductForm(project)"
+              :disabled="productFormLoading"
+            />
             <Button 
               v-if="canDeleteProject(project)"
               label="Delete"
@@ -92,6 +100,14 @@
         </div>
       </div>
     </Dialog>
+
+    <!-- Product Form Modal -->
+    <ProductForm 
+      v-model:visible="productFormVisible"
+      :project="selectedProject"
+      @product-created="handleProductCreated"
+      @error="handleProductError"
+    />
   </div>
 </template>
 
@@ -106,6 +122,7 @@ import Card from 'primevue/card';
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
 import Skeleton from 'primevue/skeleton';
+import ProductForm from './ProductForm.vue';
 
 // Add defineEmits for event communication
 const emit = defineEmits(['project-selected']);
@@ -130,6 +147,11 @@ const {
 // Component-specific reactive state
 const deleteProject = ref(null);
 const deleteLoading = ref(false);
+
+// Product form state
+const productFormVisible = ref(false);
+const selectedProject = ref(null);
+const productFormLoading = ref(false);
 
 // Simple permission checks - all authenticated users can delete their own projects
 const canDeleteProject = (project) => {
@@ -176,6 +198,9 @@ const executeDelete = async () => {
 };
 
 const getGarmentColorStyle = (colorValue, size = 200) => {
+  if (!colorValue) {
+    return cloudinaryService.getDefaultGarmentStyle(size);
+  }
   return getColorStyle(colorValue, size);
 };
 
@@ -186,6 +211,24 @@ const formatDate = (timestamp) => {
 const retryLoad = () => {
   clearError();
   loadUserProjects();
+};
+
+// Product form methods
+const openProductForm = (project) => {
+  selectedProject.value = project;
+  productFormVisible.value = true;
+};
+
+const handleProductCreated = (product) => {
+
+  // Optionally show a success message or redirect to product view
+  productFormVisible.value = false;
+};
+
+const handleProductError = (error) => {
+  console.error('Product creation error:', error);
+  // Show error message to user
+  alert(`Error creating product: ${error}`);
 };
 
 // Lifecycle
