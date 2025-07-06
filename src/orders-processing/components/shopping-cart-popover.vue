@@ -47,13 +47,11 @@ import { ref, onMounted, watch } from 'vue';
 import Button from 'primevue/button';
 import cartService from '../services/cart.service.js';
 import { env } from '../../env.js';
-import { UserService } from '../../user_management/services/user.service.js';
+import { authenticationService } from '../../iam/services/authentication.service.js';
 import { CartItem } from '../models/cart.entity.js';
-import { useUserDomain } from '../../access-security/services/user-domain.service.js';
 
 const cart = ref(null);
 const currencyCode = env.currencyCode || 'USD';
-const { currentUser } = useUserDomain();
 
 function currency(val) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: currencyCode }).format(Number(val));
@@ -115,13 +113,14 @@ function goToCart() {
 
 // Cargar carrito al montar y cuando cambie el usuario
 onMounted(async () => {
-  if (currentUser.value && currentUser.value.id) {
-    await loadCart(currentUser.value.id);
+  const userId = authenticationService.currentUserId.value || props.userId;
+  if (userId) {
+    await loadCart(userId);
   }
 });
 
 watch(
-  () => currentUser.value && currentUser.value.id,
+  () => authenticationService.currentUserId.value || props.userId,
   async (newUserId, oldUserId) => {
     if (newUserId && newUserId !== oldUserId) {
       await loadCart(newUserId);
