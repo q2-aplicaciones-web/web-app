@@ -1,10 +1,12 @@
 <template>
   <div class="project-detail">
-    <div class="project-header">
-      <div class="header-title">{{ project?.title || 'Project Detail' }}</div>
-      <div class="project-actions">
-        <Button label="Back to Projects" icon="pi pi-arrow-left" severity="secondary" size="small" @click="goBack" />
-        <Button :label="loading ? 'Saving...' : 'Save Project'" icon="pi pi-save" severity="primary" size="small" :loading="loading" :disabled="loading" @click="saveProject" />
+    <div class="project-header small-header">
+      <div class="header-title small-title" style="display: flex; align-items: center; gap: 0.7rem;">
+        <Button icon="pi pi-arrow-left" severity="secondary" size="small" rounded text @click="goBack" style="margin-right: 0.5rem;" />
+        <span>{{ project?.title || 'Project Detail' }}</span>
+      </div>
+      <div class="project-actions align-actions">
+        <Button icon="pi pi-save" severity="primary" size="small" rounded :loading="loading" :disabled="loading" text @click="saveProject" />
       </div>
     </div>
 
@@ -248,9 +250,11 @@ async function saveProject() {
 
 <style scoped>
 .project-detail {
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
   display: flex;
   flex-direction: column;
+  background: #19191a;
 }
 
 
@@ -263,6 +267,16 @@ async function saveProject() {
   background: #19191a;
 }
 
+.project-header.small-header {
+  padding: 0.5rem 1.2rem 0.5rem 1.2rem;
+  min-height: 44px;
+  border-bottom: 1px solid #222;
+  background: #19191a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .header-title {
   font-size: 2rem;
   font-weight: 700;
@@ -272,9 +286,34 @@ async function saveProject() {
   margin-top: 0.2em;
 }
 
+.header-title.small-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  letter-spacing: 0.01em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.back-btn {
+  margin-right: 0.5rem;
+  padding: 0;
+}
+
 .project-actions {
   display: flex;
   gap: 1rem;
+}
+
+.project-actions.align-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
 }
 
 
@@ -296,7 +335,6 @@ async function saveProject() {
 }
 
 .canvas-container {
-  background: #222;
   border-radius: 18px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.25);
   padding: 32px 32px 24px 32px;

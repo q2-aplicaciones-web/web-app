@@ -1,6 +1,60 @@
+<template>
+  <div class="design-canvas prime-adapted center-content">
+    <div class="canvas-area" :style="canvasSpriteStyle" @click.self="selectedLayerId = null">
+      <div
+        v-for="layer in layers"
+        :key="layer.id"
+        class="layer"
+        :style="layer.type === 'Image' ? { left: layer.x + 'px', top: layer.y + 'px', width: layer.details.width + 'px', height: layer.details.height + 'px', zIndex: layer.z || 1 } : textStyle(layer)"
+        @mousedown="startDrag($event, layer)"
+        @click.stop="selectedLayerId = layer.id"
+        @contextmenu.prevent="showLayerMenu($event, layer)"
+      >
+        <div v-if="selectedLayerId === layer.id" class="selection-border"></div>
+        <img v-if="layer.type === 'Image'" :src="layer.details.imageUrl" draggable="false" style="width: 100%; height: 100%; display: block;" />
+        <template v-if="layer.type === 'Image' && selectedLayerId === layer.id">
+          <div v-for="pos in ['tl','tr','bl','br']" :key="pos" :class="['corner-handle', pos]" @mousedown.stop="startResize($event, layer, pos)"></div>
+        </template>
+        <div v-else-if="layer.type === 'Text'"
+          :style="{ width: layer.details.width ? layer.details.width + 'px' : 'auto', height: layer.details.height ? layer.details.height + 'px' : 'auto', resize: 'both', overflow: 'auto', minWidth: '40px', minHeight: '24px', display: 'inline-block' }"
+          @mousedown.stop="startDrag($event, layer)">{{ layer.details.text }}</div>
+      </div>
+    </div>
+
+    <div class="prime-row minimal-row">
+      <FileUpload mode="basic" name="file" accept="image/*" :auto="true" chooseIcon="pi pi-upload" chooseLabel="Upload Image" class="minimal-btn fileupload-full-width" :disabled="uploading" @select="onPrimeFileUpload" :customUpload="true" @uploader="onPrimeFileUpload" />
+      <span v-if="uploading" class="upload-loader"><i class="pi pi-spin pi-spinner"></i></span>
+      <span v-if="uploadSuccess" class="upload-success"><i class="pi pi-check"></i></span>
+      <span v-if="uploadError" class="upload-error"><i class="pi pi-exclamation-triangle"></i></span>
+    </div>
+
+    <div class="prime-row minimal-row">
+      <InputText v-model="textInput" placeholder="Texto" class="minimal-input" style="flex: 1;" />
+    </div>
+
+    <div class="prime-row minimal-row" >
+      <Dropdown v-model="fontFamily" :options="fontOptions" class="minimal-input" optionLabel="label" optionValue="value" />
+      <InputNumber v-model="fontSize" :min="10" :max="100" class="minimal-input" style="width:auto; margin-right: 8px;" />
+      <ColorPicker v-model="fontColor" class="minimal-input" />
+      <Button icon="pi pi-plus" class="prime-btn minimal-btn" @click="addTextLayer" />
+    </div>
+
+    <!-- Add PrimeVue ContextMenu component -->
+    <ContextMenu ref="layerMenu" :model="layerMenuItems" />
+  </div>
+</template>
+
 <script>
+import Button from 'primevue/button';
+import FileUpload from 'primevue/fileupload';
+import InputText from 'primevue/inputtext';
+import ColorPicker from 'primevue/colorpicker';
+import Dropdown from 'primevue/dropdown';
+import InputNumber from 'primevue/inputnumber';
+import ContextMenu from 'primevue/contextmenu';
 export default {
   name: 'DesignCanvas',
+  components: { Button, FileUpload, InputText, ColorPicker, Dropdown, InputNumber, ContextMenu },
   props: {
     projectId: { type: String, required: true },
     layers: { type: Array, required: true }
@@ -41,6 +95,21 @@ export default {
       resizeLayer: null,
       resizeStart: { x: 0, y: 0, width: 0, height: 0 },
       selectedLayerId: null,
+      contextLayer: null,
+      layerMenuItems: [
+        {
+          label: 'Delete',
+          icon: 'pi pi-trash',
+          command: () => {
+            if (this.contextLayer) this.deleteLayer(this.contextLayer.id);
+          }
+        }
+      ],
+      fontOptions: [
+        { label: 'Arial', value: 'Arial' },
+        { label: 'Verdana', value: 'Verdana' },
+        { label: 'Times New Roman', value: 'Times New Roman' }
+      ],
     };
   },
   mounted() {
@@ -81,8 +150,9 @@ export default {
         position: 'relative',
         marginBottom: '24px',
         border: '1px solid #ccc',
-        marginLeft: '24px',
         overflow: 'hidden',
+        borderRadius: '18px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.10)'
       };
     }
   },
@@ -333,7 +403,16 @@ export default {
     async deleteLayer(layerId) {
       await fetch(`/api/v1/projects/${this.projectId}/layers/${layerId}`, { method: 'DELETE' });
       this.$emit('refreshLayers');
-    }
+    },
+    onPrimeFileUpload(event) {
+      const file = event.files ? event.files[0] : (event.target && event.target.files ? event.target.files[0] : null);
+      if (!file) return;
+      this.onImageUpload({ target: { files: [file] } });
+    },
+    showLayerMenu(event, layer) {
+      this.contextLayer = layer;
+      this.$refs.layerMenu.show(event);
+    },
   }
 }
 </script>
@@ -401,84 +480,40 @@ export default {
 
 .canvas-area {
   position: relative;
-  width: 340px;
-  height: 440px;
+  width: 600px;
+  height: 600px;
   margin-bottom: 24px;
   background: #fff;
-  border: 2px solid #00b894;
-  border-radius: 18px;
-  margin-left: 24px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  border: 1px solid #ccc;
+}
+.prime-row.minimal-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+}
+.prime-row.minimal-row .p-fileupload {
+  flex: 1 1 0;
+  min-width: 120px;
+}
+.prime-row.minimal-row .p-fileupload .p-button {
+  flex: 1 1 0;
+  min-width: 120px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .design-canvas {
   min-height: 500px;
-  background: #f8fafc;
-  color: #222;
-  padding: 32px 16px 16px 16px;
+  background: #181818;
+  color: #fff;
+  padding: 24px;
   border-radius: 18px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.10);
   max-width: 900px;
   margin: 0 auto;
-}
-
-.color-selector {
-  margin-bottom: 18px;
-}
-.color-list {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-}
-.color-box {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 2px solid #bbb;
-  cursor: pointer;
-  transition: border 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-}
-.color-box.selected {
-  border: 2px solid #00b894;
-  box-shadow: 0 2px 8px rgba(0,184,148,0.15);
-}
-
-.upload-section, .text-section {
-  margin-top: 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.upload-section label, .text-section label {
-  font-weight: 500;
-  margin-right: 8px;
-}
-.upload-section input[type="file"] {
-  border: 1px solid #bbb;
-  border-radius: 6px;
-  padding: 4px 8px;
-  background: #fff;
-}
-.text-section input[type="text"], .text-section input[type="color"], .text-section select, .text-section input[type="number"] {
-  border: 1px solid #bbb;
-  border-radius: 6px;
-  padding: 4px 8px;
-  background: #fff;
-  font-size: 1rem;
-}
-.text-section button {
-  background: #00b894;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 16px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.text-section button:hover {
-  background: #009e74;
 }
 
 /* Loader y feedback para subida de imagen */
@@ -504,39 +539,16 @@ export default {
   color: #fff;
   padding: 24px;
 }
-.color-selector {
-  margin-bottom: 16px;
-}
-.color-list {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-.color-box {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  border: 2px solid #333;
-  cursor: pointer;
-  transition: border 0.2s;
-}
-.color-box.selected {
-  border: 2px solid #00e676;
-}
 .canvas-area {
   position: relative;
-  width: 300px;
-  height: 400px;
+  width: 600px;
+  height: 600px;
   margin-bottom: 24px;
   background: #fff;
   border: 1px solid #ccc;
-  margin-left: 24px;
 }
 .layer {
   position: absolute;
-}
-.upload-section, .text-section {
-  margin-top: 16px;
 }
 .delete-btn {
   position: absolute;
@@ -593,71 +605,21 @@ export default {
   color: #ff5252;
   margin-left: 10px;
 }
+.center-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.fileupload-full-width {
+  flex: 1 1 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+.fileupload-full-width .p-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
 </style>
-
-<template>
-  <div class="design-canvas">
-    <!-- Selector de color de polo -->
-    <div class="color-selector">
-      <label>Color del polo:</label>
-      <div class="color-list">
-        <div
-          v-for="color in garmentColors"
-          :key="color.name"
-          :title="color.name"
-          :style="{ background: color.hex }"
-          class="color-box"
-          :class="{ selected: selectedColor === color.name }"
-          @click="selectColor(color.name)"
-        ></div>
-      </div>
-    </div>
-
-    <!-- Canvas de diseño -->
-    <div class="canvas-area" :style="canvasSpriteStyle" @click.self="selectedLayerId = null">
-      <div
-        v-for="layer in layers"
-        :key="layer.id"
-        class="layer"
-        :style="layer.type === 'Image' ? { left: layer.x + 'px', top: layer.y + 'px', width: layer.details.width + 'px', height: layer.details.height + 'px', zIndex: layer.z || 1 } : textStyle(layer)"
-        @mousedown="startDrag($event, layer)"
-        @click.stop="selectedLayerId = layer.id"
-      >
-        <!-- Blue selection border -->
-        <div v-if="selectedLayerId === layer.id" class="selection-border"></div>
-        <img v-if="layer.type === 'Image'" :src="layer.details.imageUrl" draggable="false" style="width: 100%; height: 100%; display: block;" />
-        <!-- Four corner resize handles for images -->
-        <template v-if="layer.type === 'Image' && selectedLayerId === layer.id">
-          <div v-for="pos in ['tl','tr','bl','br']" :key="pos" :class="['corner-handle', pos]" @mousedown.stop="startResize($event, layer, pos)"></div>
-        </template>
-        <div v-else-if="layer.type === 'Text'"
-          :style="{ width: layer.details.width ? layer.details.width + 'px' : 'auto', height: layer.details.height ? layer.details.height + 'px' : 'auto', resize: 'both', overflow: 'auto', minWidth: '40px', minHeight: '24px', display: 'inline-block' }"
-          @mousedown.stop="startDrag($event, layer)">{{ layer.details.text }}</div>
-        <button class="delete-btn" @click.stop="deleteLayer(layer.id)">x</button>
-      </div>
-    </div>
-
-    <!-- Subir imagen -->
-    <div class="upload-section">
-      <label>Subir imagen:</label>
-      <input type="file" @change="onImageUpload" accept="image/*" :disabled="uploading" />
-      <span v-if="uploading" class="upload-loader">Subiendo...</span>
-      <span v-if="uploadSuccess" class="upload-success">¡Imagen subida!</span>
-      <span v-if="uploadError" class="upload-error">{{ uploadError }}</span>
-    </div>
-
-    <!-- Agregar texto -->
-    <div class="text-section">
-      <label>Agregar texto:</label>
-      <input v-model="textInput" placeholder="Texto" />
-      <input v-model="fontColor" type="color" />
-      <select v-model="fontFamily">
-        <option value="Arial">Arial</option>
-        <option value="Verdana">Verdana</option>
-        <option value="Times New Roman">Times New Roman</option>
-      </select>
-      <input v-model.number="fontSize" type="number" min="10" max="100" />
-      <button @click="addTextLayer">Agregar texto</button>
-    </div>
-  </div>
-</template>
