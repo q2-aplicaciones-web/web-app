@@ -44,34 +44,6 @@ export class Project {
             garmentGender: this.gender
         };
     }
-
-    /**
-     * Add a layer to the project
-     */
-    addLayer(layer) {
-        this.layers.push(layer);
-    }
-
-    /**
-     * Remove a layer from the project
-     */
-    removeLayer(layerId) {
-        this.layers = this.layers.filter(layer => layer.id !== layerId);
-    }
-
-    /**
-     * Get layer by ID
-     */
-    getLayer(layerId) {
-        return this.layers.find(layer => layer.id === layerId);
-    }
-
-    /**
-     * Get layers sorted by z-index
-     */
-    getLayersSortedByZ() {
-        return [...this.layers].sort((a, b) => a.z - b.z);
-    }
 }
 
 /**
@@ -89,34 +61,6 @@ export class Layer {
         this.createdAt = data.createdAt || '';
         this.updatedAt = data.updatedAt || '';
         this.details = data.details || {};
-    }
-
-    /**
-     * Update layer coordinates
-     */
-    updateCoordinates(x, y, z = null) {
-        this.x = x;
-        this.y = y;
-        if (z !== null) {
-            this.z = z;
-        }
-        this.updatedAt = new Date().toISOString();
-    }
-
-    /**
-     * Update layer opacity
-     */
-    updateOpacity(opacity) {
-        this.opacity = Math.max(0, Math.min(1, opacity)); // Clamp between 0 and 1
-        this.updatedAt = new Date().toISOString();
-    }
-
-    /**
-     * Toggle layer visibility
-     */
-    toggleVisibility() {
-        this.isVisible = !this.isVisible;
-        this.updatedAt = new Date().toISOString();
     }
 }
 
@@ -169,34 +113,6 @@ export class TextLayer extends Layer {
             isUnderlined: this.details.isUnderlined
         };
     }
-
-    /**
-     * Update text content
-     */
-    updateText(text) {
-        this.details.text = text;
-        this.updatedAt = new Date().toISOString();
-    }
-
-    /**
-     * Update font properties
-     */
-    updateFont(fontFamily, fontSize, fontColor) {
-        if (fontFamily) this.details.fontFamily = fontFamily;
-        if (fontSize) this.details.fontSize = fontSize;
-        if (fontColor) this.details.fontColor = fontColor;
-        this.updatedAt = new Date().toISOString();
-    }
-
-    /**
-     * Update text styles
-     */
-    updateStyles(isBold, isItalic, isUnderlined) {
-        if (isBold !== undefined) this.details.isBold = isBold;
-        if (isItalic !== undefined) this.details.isItalic = isItalic;
-        if (isUnderlined !== undefined) this.details.isUnderlined = isUnderlined;
-        this.updatedAt = new Date().toISOString();
-    }
 }
 
 /**
@@ -235,36 +151,6 @@ export class ImageLayer extends Layer {
             width: this.details.width,
             height: this.details.height
         };
-    }
-
-    /**
-     * Update image URL
-     */
-    updateImageUrl(imageUrl) {
-        this.details.imageUrl = imageUrl;
-        this.updatedAt = new Date().toISOString();
-    }
-
-    /**
-     * Update image dimensions
-     */
-    updateDimensions(width, height) {
-        this.details.width = width.toString();
-        this.details.height = height.toString();
-        this.updatedAt = new Date().toISOString();
-    }
-
-    /**
-     * Scale image proportionally
-     */
-    scaleProportionally(newWidth) {
-        const currentWidth = parseInt(this.details.width);
-        const currentHeight = parseInt(this.details.height);
-        const aspectRatio = currentHeight / currentWidth;
-        
-        this.details.width = newWidth.toString();
-        this.details.height = Math.round(newWidth * aspectRatio).toString();
-        this.updatedAt = new Date().toISOString();
     }
 }
 

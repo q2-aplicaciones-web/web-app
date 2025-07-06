@@ -2,26 +2,26 @@
   <div class="project-list">
     <!-- Header -->
     <div class="project-list-header">
-      <h1>My Projects</h1>
+      <h1>{{ t('designLab.projectList.title') }}</h1>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="loading-state">
       <Skeleton width="100%" height="40px" />
-      <p>Loading projects...</p>
+      <p>{{ t('designLab.projectList.loading') }}</p>
     </div>
 
     <!-- Error State -->
     <Message v-else-if="error" severity="error" class="error-state">
       {{ error }}
-      <Button label="Retry" severity="secondary" @click="loadProjects" size="small" />
+      <Button :label="t('common.retry')" severity="secondary" @click="loadProjects" size="small" />
     </Message>
 
     <!-- Empty State -->
     <Message v-else-if="projects.length === 0" severity="info" class="empty-state">
-      <h2>No projects yet</h2>
-      <p>Create your first design project to get started!</p>
-      <Button label="Create First Project" icon="pi pi-plus" severity="primary" @click="createNewProject" />
+      <h2>{{ t('designLab.projectList.noProjects') }}</h2>
+      <p>{{ t('designLab.projectList.createFirstMessage') }}</p>
+      <Button :label="t('designLab.projectList.createFirst')" icon="pi pi-plus" severity="primary" @click="createNewProject" />
     </Message>
 
     <!-- Projects Grid -->
@@ -47,7 +47,7 @@
           <div class="project-preview">
             <div 
               class="garment-preview"
-              :style="getGarmentColorStyle(project.garmentColor)"
+              :style="getGarmentColorStyle(project.color)"
             ></div>
           </div>
 
@@ -55,13 +55,13 @@
           <div class="project-info">
             <h3 class="project-title">{{ project.title }}</h3>
             <div class="project-meta">
-              <span class="project-size">{{ project.garmentSize }}</span>
-              <span class="project-gender">{{ project.garmentGender }}</span>
+              <span class="project-size">{{ project.size }}</span>
+              <span class="project-gender">{{ t(`designLab.genders.${project.gender?.toLowerCase()}`) }}</span>
             </div>
             <div class="project-dates">
-              <span class="created-date">Created: {{ formatDate(project.createdAt) }}</span>
+              <span class="created-date">{{ t('designLab.projectList.created') }}: {{ formatDate(project.createdAt) }}</span>
               <span v-if="project.updatedAt !== project.createdAt" class="updated-date">
-                Updated: {{ formatDate(project.updatedAt) }}
+                {{ t('designLab.projectList.updated') }}: {{ formatDate(project.updatedAt) }}
               </span>
             </div>
           </div>
@@ -69,8 +69,17 @@
           <!-- Project Actions -->
           <div class="project-actions" @click.stop>
             <Button 
+              :label="t('designLab.projectList.createProduct')"
+              icon="pi pi-shopping-bag"
+              severity="success"
+              size="small"
+              @click="openProductForm(project)"
+              :disabled="productFormLoading || project.status === 'Garment'"
+              :title="project.status === 'Garment' ? t('designLab.projectList.alreadyPublished') : t('designLab.projectList.createProductTooltip')"
+            />
+            <Button 
               v-if="canDeleteProject(project)"
-              label="Delete"
+              :label="t('common.delete')"
               severity="danger"
               size="small"
               @click="confirmDelete(project)"
@@ -82,21 +91,42 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <Dialog v-model:visible="dialogVisible" modal header="Delete Project" :closable="false" :style="{ width: '400px' }">
+    <Dialog v-model:visible="dialogVisible" modal :header="t('designLab.deleteProject.title')" :closable="false" :style="{ width: '450px' }">
       <div v-if="deleteProject">
-        <p>Are you sure you want to delete "{{ deleteProject.title }}"?</p>
-        <p class="warning-text">This action cannot be undone.</p>
+        <p>{{ t('designLab.deleteProject.confirmMessage', { title: deleteProject.title }) }}</p>
+        
+        <!-- Warning for published projects -->
+        <Message v-if="deleteProject.status === 'Garment'" severity="warn" :closable="false" class="mb-3">
+          <strong>{{ t('designLab.deleteProject.warning') }}:</strong> {{ t('designLab.deleteProjectWithProduct') }}
+        </Message>
+        
+        <p class="warning-text">{{ t('designLab.deleteProject.cannotUndo') }}</p>
         <div class="modal-actions">
-          <Button label="Cancel" severity="secondary" @click="cancelDelete" :disabled="deleteLoading" />
-          <Button label="Delete Project" severity="danger" @click="executeDelete" :loading="deleteLoading" :disabled="deleteLoading" />
+          <Button :label="t('common.cancel')" severity="secondary" @click="cancelDelete" :disabled="deleteLoading" />
+          <Button 
+            :label="deleteProject.status === 'Garment' ? t('designLab.deleteProjectAndProduct') : t('designLab.deleteProject.confirm')" 
+            severity="danger" 
+            @click="executeDelete" 
+            :loading="deleteLoading" 
+            :disabled="deleteLoading" 
+          />
         </div>
       </div>
     </Dialog>
+
+    <!-- Product Form Modal -->
+    <ProductForm 
+      v-model:visible="productFormVisible"
+      :project="selectedProject"
+      @product-created="handleProductCreated"
+      @error="handleProductError"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
+import { useI18n } from 'vue-i18n';
 import { useProjects } from '../composables/useProjects.js';
 import { useGarmentColors } from '../composables/useGarmentColors.js';
 import { authenticationService } from '../../iam/services/authentication.service.js';
@@ -106,6 +136,10 @@ import Card from 'primevue/card';
 import Dialog from 'primevue/dialog';
 import Message from 'primevue/message';
 import Skeleton from 'primevue/skeleton';
+import ProductForm from './ProductForm.vue';
+
+// Add i18n support
+const { t } = useI18n();
 
 // Add defineEmits for event communication
 const emit = defineEmits(['project-selected']);
@@ -130,6 +164,11 @@ const {
 // Component-specific reactive state
 const deleteProject = ref(null);
 const deleteLoading = ref(false);
+
+// Product form state
+const productFormVisible = ref(false);
+const selectedProject = ref(null);
+const productFormLoading = ref(false);
 
 // Simple permission checks - all authenticated users can delete their own projects
 const canDeleteProject = (project) => {
@@ -176,6 +215,9 @@ const executeDelete = async () => {
 };
 
 const getGarmentColorStyle = (colorValue, size = 200) => {
+  if (!colorValue) {
+    return cloudinaryService.getDefaultGarmentStyle(size);
+  }
   return getColorStyle(colorValue, size);
 };
 
@@ -186,6 +228,37 @@ const formatDate = (timestamp) => {
 const retryLoad = () => {
   clearError();
   loadUserProjects();
+};
+
+// Product form methods
+const openProductForm = async (project) => {
+  // Refresh project data to ensure we have the latest status
+  await loadUserProjects();
+  
+  // Find the updated project
+  const updatedProject = projects.value.find(p => p.id === project.id);
+  const projectToUse = updatedProject || project;
+  
+  if (projectToUse.status === 'Garment') {
+    alert('This project has already been published as a product and cannot be published again.');
+    return;
+  }
+  
+  selectedProject.value = projectToUse;
+  productFormVisible.value = true;
+};
+
+const handleProductCreated = (product) => {
+  // Refresh project list to get updated data
+  loadUserProjects();
+  // Optionally show a success message or redirect to product view
+  productFormVisible.value = false;
+};
+
+const handleProductError = (error) => {
+  console.error('Product creation error:', error);
+  // Show error message to user
+  alert(`Error creating product: ${error}`);
 };
 
 // Lifecycle

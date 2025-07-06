@@ -5,7 +5,7 @@ import Button from "primevue/button";
 import Menu from "primevue/menu";
 import Toolbar from "primevue/toolbar";
 import Toast from "primevue/toast";
-import OverlayPanel from "primevue/overlaypanel";
+import Popover from "primevue/popover";
 import { useRouter, useRoute } from "vue-router";
 import { ref, computed, provide, watch, nextTick, onMounted, onUnmounted } from "vue";
 import ShoppingCartPopover from "./orders-processing/components/shopping-cart-popover.vue";
@@ -38,7 +38,7 @@ const isEditingTitle = ref(false);
 const editableTitle = ref('');
 const titleInput = ref(null);
 const updateProjectFunction = ref(null);
-const overlayPanelRef = ref(null);
+const popoverRef = ref(null);
 const currentUserId = ref(authenticationService.currentUserId.value || "user-1");
 const currencyCode = ref('PEN'); // Permite cambiar el tipo de moneda
 
@@ -124,7 +124,7 @@ function handleTitleKeydown(event) {
 }
 
 function showCartPopover(event) {
-    overlayPanelRef.value.toggle(event);
+    popoverRef.value.toggle(event);
 }
 
 // Watch for route changes to reset dynamic title when navigating away
@@ -292,11 +292,11 @@ watch(locale, () => {
                                 aria-label="Cart"
                                 @click="showCartPopover"
                             />
-                            <OverlayPanel ref="overlayPanelRef">
+                            <Popover ref="popoverRef">
                                 <ShoppingCartPopover :user-id="currentUserId" :currency-code="currencyCode" />
-                            </OverlayPanel>
+                            </Popover>
                             <Button
-                                :label="t('language')"
+                                :label="t('language.switch')"
                                 icon="pi pi-globe"
                                 severity="secondary"
                                 rounded

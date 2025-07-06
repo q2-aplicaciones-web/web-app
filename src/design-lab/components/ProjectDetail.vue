@@ -99,30 +99,50 @@ const retryLoad = () => {
 const selectedLayer = ref(null);
 const editableLayers = ref([]);
 
-// Color normalization utility
-const garmentColors = [
-  { name: 'Black', hex: '#161615' },
-  { name: 'Gray', hex: '#403D3B' },
-  { name: 'LightGray', hex: '#B3B1AF' },
-  { name: 'White', hex: '#EDEDED' },
-  { name: 'Red', hex: '#B51B14' },
-  { name: 'Pink', hex: '#F459B0' },
-  { name: 'LightPurple', hex: '#D890E4' },
-  { name: 'Purple', hex: '#693FA0' },
-  { name: 'LightBlue', hex: '#00A5BC' },
-  { name: 'Cyan', hex: '#31B7C9' },
-  { name: 'SkyBlue', hex: '#3F9BDC' },
-  { name: 'Blue', hex: '#1B3D92' },
-  { name: 'Green', hex: '#1B8937' },
-  { name: 'LightGreen', hex: '#5BBE65' },
-  { name: 'Yellow', hex: '#FECD08' },
-  { name: 'DarkYellow', hex: '#F2AB00' }
-];
+// Color normalization utility using cloudinary service
+
 function normalizeFontColor(color) {
   if (!color) return '#000000';
   if (typeof color === 'string' && color.startsWith('#')) return color;
-  const found = garmentColors.find(c => c.name.toLowerCase() === String(color).toLowerCase());
-  return found ? found.hex : '#000000';
+  
+  // Try to get color by label from cloudinary service
+  const found = cloudinaryService.getGarmentColorByLabel(String(color));
+  if (found && found.hex) {
+    return found.hex;
+  }
+  
+  // Try to get color by value from cloudinary service  
+  const foundByValue = cloudinaryService.getGarmentColorByValue(String(color));
+  if (foundByValue && foundByValue.hex) {
+    return foundByValue.hex;
+  }
+  
+  // Map common color names to hex values as fallback
+  const colorNameMap = {
+    'black': '#000000',
+    'white': '#FFFFFF', 
+    'red': '#FF0000',
+    'green': '#008000',
+    'blue': '#0000FF',
+    'yellow': '#FFFF00',
+    'gray': '#808080',
+    'grey': '#808080',
+    'purple': '#800080',
+    'pink': '#FFC0CB',
+    'orange': '#FFA500',
+    'brown': '#A52A2A',
+    'cyan': '#00FFFF',
+    'magenta': '#FF00FF'
+  };
+  
+  const normalizedName = String(color).toLowerCase();
+  if (colorNameMap[normalizedName]) {
+    return colorNameMap[normalizedName];
+  }
+  
+  // If no color found, return default black
+  console.warn(`Font color "${color}" not found, using default black`);
+  return '#000000';
 }
 
 // Sincroniza editableLayers con el backend cuando cambia el proyecto
@@ -234,7 +254,6 @@ async function saveProject() {
       if (layer.type === 'Text') {
         // 1. Update text details (only details fields)
         const textDetails = { ...layer.details };
-        console.log('Text layer update payload:', textDetails);
         await designLabService.updateTextLayerDetails(
           project.value.id,
           layer.id,
@@ -248,7 +267,6 @@ async function saveProject() {
           width: String(layer.details.width || ''),
           height: String(layer.details.height || '')
         };
-        console.log('Image layer update payload:', imageDetails);
         await designLabService.updateImageLayerDetails(
           project.value.id,
           layer.id,
@@ -257,7 +275,6 @@ async function saveProject() {
       }
       // 2. Update coordinates for all layers
       const coords = { x: layer.x, y: layer.y, z: layer.z };
-      console.log('Layer coordinates update payload:', coords);
       await designLabService.updateLayerCoordinates(
         project.value.id,
         layer.id,
@@ -265,6 +282,7 @@ async function saveProject() {
       );
     });
     await Promise.all(promises);
+    
     await refreshLayers();
   } catch (e) {
     console.error('Save error:', e?.response?.data || e);

@@ -4,71 +4,71 @@
     <div class="create-project-container">
       <!-- Header -->
       <div class="header">
-        <h1>Create New Project</h1>
-        <p>Start designing your custom t-shirt</p>
+        <h1>{{ t('designLab.createProject.title') }}</h1>
+        <p>{{ t('designLab.createProject.subtitle') }}</p>
       </div>
 
       <!-- Project Form -->
       <form @submit.prevent="handleSubmit" class="project-form">
         <!-- Project Title -->
         <div class="form-group">
-          <label for="title">Project Name</label>
+          <label for="title">{{ t('designLab.createProject.projectName') }}</label>
           <InputText
             id="title"
             v-model="formData.title"
-            placeholder="Enter project name"
+            :placeholder="t('designLab.createProject.enterProjectName')"
             :class="{ 'p-invalid': !formData.title }"
             required
           />
-          <div class="form-help">Give your project a unique and descriptive name.</div>
+          <div class="form-help">{{ t('designLab.createProject.projectNameHelp') }}</div>
         </div>
 
         <!-- Garment Color Selection -->
         <div class="form-group">
-          <label for="color">Garment Color</label>
-          <Dropdown
+          <label for="color">{{ t('designLab.createProject.garmentColor') }}</label>
+          <Select
             id="color"
             v-model="formData.garmentColor"
             :options="colorOptions"
             optionLabel="label"
             optionValue="value"
-            placeholder="Select color"
+            :placeholder="t('designLab.createProject.selectColor')"
             class="w-full"
             required
           />
-          <div class="form-help">Choose the t-shirt color for your design.</div>
+          <div class="form-help">{{ t('designLab.createProject.colorHelp') }}</div>
         </div>
 
         <!-- Garment Size -->
         <div class="form-group">
-          <label for="size">Size</label>
-          <Dropdown
+          <label for="size">{{ t('designLab.createProject.size') }}</label>
+          <Select
             id="size"
             v-model="formData.garmentSize"
             :options="sizeOptions"
             optionLabel="label"
             optionValue="value"
-            placeholder="Select size"
+            :placeholder="t('designLab.createProject.selectSize')"
             class="w-full"
             required
           />
-          <div class="form-help">Select the size for your t-shirt (e.g., S, M, L, XL).</div>
+          <div class="form-help">{{ t('designLab.createProject.sizeHelp') }}</div>
         </div>
 
         <!-- Gender -->
         <div class="form-group">
-          <label for="gender">Gender</label>
-          <Dropdown
+          <label for="gender">{{ t('designLab.createProject.gender') }}</label>
+          <Select
             id="gender"
             v-model="formData.garmentGender"
             :options="genderOptions"
             optionLabel="label"
             optionValue="value"
-            placeholder="Select gender"
+            :placeholder="t('designLab.createProject.selectGender')"
             class="w-full"
             required
           />
-          <div class="form-help">Choose the intended fit for the t-shirt.</div>
+          <div class="form-help">{{ t('designLab.createProject.genderHelp') }}</div>
         </div>
 
         <!-- Error Display -->
@@ -80,14 +80,14 @@
         <div class="form-actions">
           <Button
             type="button"
-            label="Cancel"
+            :label="t('common.cancel')"
             severity="secondary"
             @click="goBack"
             outlined
           />
           <Button
             type="submit"
-            :label="loading ? 'Creating...' : 'Create Project'"
+            :label="loading ? t('designLab.createProject.creating') : t('designLab.createProject.createProject')"
             :loading="loading"
             :disabled="loading || !isFormValid"
             severity="primary"
@@ -100,13 +100,16 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useProjects } from '../composables/useProjects.js'
 import { GARMENT_COLOR, getGarmentGenderOptions, getGarmentSizeOptions, getGarmentColorOptions } from '../../consts.js'
 import InputText from 'primevue/inputtext'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import Button from 'primevue/button'
 
+// Add i18n support
+const { t } = useI18n()
 const router = useRouter()
 const formData = ref({
   title: '',
@@ -121,9 +124,27 @@ const {
   createProject
 } = useProjects()
 
-const genderOptions = getGarmentGenderOptions().map(opt => typeof opt === 'string' ? { label: opt, value: opt } : opt)
-const sizeOptions = getGarmentSizeOptions().map(opt => typeof opt === 'string' ? { label: opt, value: opt } : opt)
-const colorOptions = getGarmentColorOptions().map(opt => typeof opt === 'string' ? { label: opt, value: opt } : opt)
+// Create internationalized options
+const genderOptions = computed(() => 
+  getGarmentGenderOptions().map(opt => ({
+    label: t(`designLab.genders.${opt.toLowerCase()}`),
+    value: opt
+  }))
+)
+
+const sizeOptions = computed(() => 
+  getGarmentSizeOptions().map(opt => ({
+    label: opt, // Sizes are typically the same across languages (S, M, L, XL)
+    value: opt
+  }))
+)
+
+const colorOptions = computed(() => 
+  getGarmentColorOptions().map(opt => ({
+    label: t(`colors.${opt.toLowerCase().replace(/\s+/g, '')}`),
+    value: opt
+  }))
+)
 
 const isFormValid = computed(() => {
   return formData.value.title.trim() &&
@@ -155,7 +176,9 @@ const goBack = () => {
 
 onMounted(() => {
   const now = new Date()
-  formData.value.title = `Design ${now.toLocaleDateString()}`
+  formData.value.title = t('designLab.createProject.defaultProjectName', { 
+    date: now.toLocaleDateString() 
+  })
 })
 </script>
 

@@ -93,13 +93,51 @@ export class DesignLabService {
     }
 
     /**
-     * Delete a project
+     * Delete a project and associated product if it exists
      * @param {string} projectId - Project UUID
      * @returns {Promise<Object>} Deletion confirmation
      */
     async deleteProject(projectId) {
         try {
-            return await designLabApiService.deleteProject(projectId);
+            console.log(`Starting deletion process for project: ${projectId}`);
+            
+            // First get the project to check if it has been published as a product
+            const project = await this.getProject(projectId);
+            console.log(`Project status: ${project.status}`);
+            
+            // If project status is 'Garment', it means it has been published as a product
+            // We need to delete the associated product first
+            if (project.status === 'Garment') {
+                console.log('Project has been published as a product. Deleting associated product(s)...');
+                try {
+                    // Import the product catalog service dynamically to avoid circular dependencies
+                    const { default: productCatalogService } = await import('../../productCatalog/application/productCatalogService.js');
+                    
+                    // Get all products to find the one associated with this project
+                    console.log(`Searching for products associated with project: ${projectId}`);
+                    const products = await productCatalogService.getAllProducts(projectId);
+                    console.log(`Found ${products.length} product(s) associated with this project`);
+                    
+                    // Delete each product associated with this project
+                    for (const product of products) {
+                        if (product.projectId === projectId) {
+                            console.log(`Deleting product ${product.id} associated with project ${projectId}`);
+                            await productCatalogService.deleteProduct(product.id);
+                            console.log(`Successfully deleted product ${product.id}`);
+                        }
+                    }
+                } catch (productDeleteError) {
+                    console.warn('Failed to delete associated product:', productDeleteError);
+                    // Continue with project deletion even if product deletion fails
+                    // This prevents orphaned projects if product service is unavailable
+                }
+            }
+            
+            // Delete the project
+            console.log(`Deleting project: ${projectId}`);
+            const result = await designLabApiService.deleteProject(projectId);
+            console.log(`Successfully deleted project: ${projectId}`);
+            return result;
         } catch (error) {
             console.error('Error deleting project:', error);
             throw DesignLabAssembler.toApiErrorEntity(error);
@@ -263,8 +301,6 @@ export class DesignLabService {
                 y: Math.round(Number(coords.y)),
                 z: Math.round(Number(coords.z))
             };
-            // Log the sanitized payload for debugging
-            console.log('Layer coordinates update payload:', JSON.stringify(payload, null, 2));
             const apiResponse = await designLabApiService.updateLayerCoordinates(projectId, layerId, payload);
             return DesignLabAssembler.toLayerEntity(apiResponse);
         } catch (error) {

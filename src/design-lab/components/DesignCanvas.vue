@@ -24,7 +24,7 @@
     <!-- Upload Button Section -->
     <div class="upload-section-sep">
       <div class="prime-row minimal-row">
-        <FileUpload mode="basic" name="file" accept="image/*" :auto="true" chooseIcon="pi pi-upload" chooseLabel="Upload Image" class="minimal-btn fileupload-full-width" :disabled="uploading" @select="onPrimeFileUpload" :customUpload="true" @uploader="onPrimeFileUpload" />
+        <FileUpload mode="basic" name="file" accept="image/*" :auto="true" chooseIcon="pi pi-upload" :chooseLabel="t('designLab.canvas.uploadImage')" class="minimal-btn fileupload-full-width" :disabled="uploading" @select="onPrimeFileUpload" :customUpload="true" />
         <span v-if="uploading" class="upload-loader"><i class="pi pi-spin pi-spinner"></i></span>
         <span v-if="uploadSuccess" class="upload-success"><i class="pi pi-check"></i></span>
         <span v-if="uploadError" class="upload-error"><i class="pi pi-exclamation-triangle"></i></span>
@@ -34,58 +34,45 @@
     <!-- Text Options Section -->
     <div class="text-options-sep">
       <div class="prime-row minimal-row">
-        <InputText v-model="textInput" placeholder="Texto" class="minimal-input" style="flex: 1;" />
+        <InputText v-model="textInput" :placeholder="t('designLab.canvas.textPlaceholder')" class="minimal-input" style="flex: 1;" />
       </div>
       <div class="prime-row minimal-row" >
-        <Dropdown v-model="fontFamily" :options="fontOptions" class="minimal-input" optionLabel="label" optionValue="value" />
+        <Select v-model="fontFamily" :options="translatedFontOptions" class="minimal-input" optionLabel="label" optionValue="value" />
         <InputNumber v-model="fontSize" :min="10" :max="100" class="minimal-input" style="width:auto; margin-right: 8px;" />
-        <ColorPicker v-model="fontColor" class="minimal-input" />
+        <Select v-model="fontColor" :options="translatedColorOptions" class="minimal-input" optionLabel="label" optionValue="value" />
         <Button icon="pi pi-plus" class="prime-btn minimal-btn" @click="addTextLayer" />
       </div>
     </div>
 
     <!-- Add PrimeVue ContextMenu component -->
-    <ContextMenu ref="layerMenu" :model="layerMenuItems" />
+    <ContextMenu ref="layerMenu" :model="translatedLayerMenuItems" />
   </div>
 </template>
 
 <script>
+import { useI18n } from 'vue-i18n'
 import Button from 'primevue/button';
 import FileUpload from 'primevue/fileupload';
 import InputText from 'primevue/inputtext';
-import ColorPicker from 'primevue/colorpicker';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import InputNumber from 'primevue/inputnumber';
 import ContextMenu from 'primevue/contextmenu';
-import designLabService from '../services/design-lab.service.js';
+import designLabService from '../services/design-lab.service.js'
+import cloudinaryService from '../services/cloudinary.service.js';
 export default {
   name: 'DesignCanvas',
-  components: { Button, FileUpload, InputText, ColorPicker, Dropdown, InputNumber, ContextMenu },
+  components: { Button, FileUpload, InputText, Select, InputNumber, ContextMenu },
   props: {
     projectId: { type: String, required: true },
     layers: { type: Array, required: true },
     projectColor: { type: String, required: true }
   },
+  setup() {
+    const { t } = useI18n()
+    return { t }
+  },
   data() {
     return {
-      garmentColors: [
-        { name: 'Black', hex: '#161615' },
-        { name: 'Gray', hex: '#403D3B' },
-        { name: 'LightGray', hex: '#B3B1AF' },
-        { name: 'White', hex: '#EDEDED' },
-        { name: 'Red', hex: '#B51B14' },
-        { name: 'Pink', hex: '#F459B0' },
-        { name: 'LightPurple', hex: '#D890E4' },
-        { name: 'Purple', hex: '#693FA0' },
-        { name: 'LightBlue', hex: '#00A5BC' },
-        { name: 'Cyan', hex: '#31B7C9' },
-        { name: 'SkyBlue', hex: '#3F9BDC' },
-        { name: 'Blue', hex: '#1B3D92' },
-        { name: 'Green', hex: '#1B8937' },
-        { name: 'LightGreen', hex: '#5BBE65' },
-        { name: 'Yellow', hex: '#FECD08' },
-        { name: 'DarkYellow', hex: '#F2AB00' }
-      ],
       textInput: '',
       fontColor: '#000000',
       fontFamily: 'Arial',
@@ -101,21 +88,7 @@ export default {
       resizeLayer: null,
       resizeStart: { x: 0, y: 0, width: 0, height: 0 },
       selectedLayerId: null,
-      contextLayer: null,
-      layerMenuItems: [
-        {
-          label: 'Delete',
-          icon: 'pi pi-trash',
-          command: () => {
-            if (this.contextLayer) this.deleteLayer(this.contextLayer.id);
-          }
-        }
-      ],
-      fontOptions: [
-        { label: 'Arial', value: 'Arial' },
-        { label: 'Verdana', value: 'Verdana' },
-        { label: 'Times New Roman', value: 'Times New Roman' }
-      ],
+      contextLayer: null
     };
   },
   mounted() {
@@ -131,7 +104,7 @@ export default {
       return this.projectColor;
     },
     selectedColorHex() {
-      const color = this.garmentColors.find(c => c.name === this.currentColor);
+      const color = cloudinaryService.getGarmentColorByLabel(this.currentColor);
       return color ? color.hex : '#EDEDED';
     },
     canvasSpriteStyle() {
@@ -163,6 +136,48 @@ export default {
         borderRadius: '18px',
         boxShadow: '0 4px 16px rgba(0,0,0,0.10)'
       };
+    },
+    translatedLayerMenuItems() {
+      return [
+        {
+          label: this.t('designLab.canvas.delete'),
+          icon: 'pi pi-trash',
+          command: () => {
+            if (this.contextLayer) this.deleteLayer(this.contextLayer.id);
+          }
+        }
+      ];
+    },
+    translatedFontOptions() {
+      return [
+        { label: this.t('designLab.canvas.fontFamilies.arial'), value: 'Arial' },
+        { label: this.t('designLab.canvas.fontFamilies.verdana'), value: 'Verdana' },
+        { label: this.t('designLab.canvas.fontFamilies.timesNewRoman'), value: 'Times New Roman' }
+      ];
+    },
+    translatedColorOptions() {
+      return [
+        { label: this.t('designLab.canvas.fontColors.black'), value: '#000000' },
+        { label: this.t('designLab.canvas.fontColors.white'), value: '#FFFFFF' },
+        { label: this.t('designLab.canvas.fontColors.red'), value: '#FF0000' },
+        { label: this.t('designLab.canvas.fontColors.green'), value: '#008000' },
+        { label: this.t('designLab.canvas.fontColors.blue'), value: '#0000FF' },
+        { label: this.t('designLab.canvas.fontColors.yellow'), value: '#FFFF00' },
+        { label: this.t('designLab.canvas.fontColors.orange'), value: '#FFA500' },
+        { label: this.t('designLab.canvas.fontColors.purple'), value: '#800080' },
+        { label: this.t('designLab.canvas.fontColors.pink'), value: '#FFC0CB' },
+        { label: this.t('designLab.canvas.fontColors.brown'), value: '#A52A2A' },
+        { label: this.t('designLab.canvas.fontColors.gray'), value: '#808080' },
+        { label: this.t('designLab.canvas.fontColors.lightGray'), value: '#D3D3D3' },
+        { label: this.t('designLab.canvas.fontColors.darkGray'), value: '#404040' },
+        { label: this.t('designLab.canvas.fontColors.navy'), value: '#000080' },
+        { label: this.t('designLab.canvas.fontColors.teal'), value: '#008080' },
+        { label: this.t('designLab.canvas.fontColors.lime'), value: '#00FF00' },
+        { label: this.t('designLab.canvas.fontColors.cyan'), value: '#00FFFF' },
+        { label: this.t('designLab.canvas.fontColors.magenta'), value: '#FF00FF' },
+        { label: this.t('designLab.canvas.fontColors.maroon'), value: '#800000' },
+        { label: this.t('designLab.canvas.fontColors.olive'), value: '#808000' }
+      ];
     }
   },
   methods: {
@@ -323,10 +338,10 @@ export default {
           body: formData
         });
         const data = await response.json();
-        if (!data.secure_url) throw new Error('No se pudo obtener la URL de la imagen');
+        if (!data.secure_url) throw new Error(this.t('designLab.canvas.noImageUrl'));
         imageUrl = data.secure_url;
       } catch (err) {
-        this.uploadError = 'Error subiendo imagen a Cloudinary';
+        this.uploadError = this.t('designLab.canvas.errorUploadingImage');
         this.uploading = false;
         return;
       }
@@ -347,16 +362,23 @@ export default {
         setTimeout(() => { this.uploadSuccess = false; }, 1500);
         this.$emit('refreshLayers');
       } catch (err) {
-        this.uploadError = 'Error guardando la imagen en el proyecto';
+        this.uploadError = this.t('designLab.canvas.errorSavingImage');
       } finally {
         this.uploading = false;
       }
     },
     async addTextLayer() {
       if (!this.textInput.trim()) {
-        this.uploadError = 'El texto no puede estar vacío';
+        this.uploadError = this.t('designLab.canvas.textEmpty');
         return;
       }
+      
+      // Ensure fontColor is a valid hex color
+      let validFontColor = this.fontColor;
+      if (!validFontColor || typeof validFontColor !== 'string' || !validFontColor.startsWith('#')) {
+        validFontColor = '#000000'; // Default to black
+      }
+      
       // Center the text in the canvas
       const canvas = this.$el.querySelector('.canvas-area');
       const rect = canvas.getBoundingClientRect();
@@ -366,7 +388,7 @@ export default {
       const y = Math.max(0, Math.round((rect.height - height) / 2));
       const body = {
         text: String(this.textInput),
-        fontColor: String(this.fontColor),
+        fontColor: String(validFontColor),
         fontFamily: String(this.fontFamily),
         fontSize: Number(this.fontSize),
         isBold: false,
@@ -378,7 +400,7 @@ export default {
         y
       };
       if (isNaN(body.fontSize) || body.fontSize < 10 || body.fontSize > 100) {
-        this.uploadError = 'El tamaño de fuente debe ser un número entre 10 y 100';
+        this.uploadError = this.t('designLab.canvas.invalidFontSize');
         return;
       }
       this.uploadError = '';
@@ -390,7 +412,7 @@ export default {
         this.fontSize = 24;
         this.$emit('refreshLayers');
       } catch (e) {
-        this.uploadError = e?.message || 'Error al crear la capa de texto';
+        this.uploadError = e?.message || this.t('designLab.canvas.errorCreatingTextLayer');
       }
     },
     async deleteLayer(layerId) {
