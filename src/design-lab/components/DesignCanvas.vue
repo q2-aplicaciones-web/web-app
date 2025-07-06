@@ -39,7 +39,8 @@ export default {
       dragOffset: { x: 0, y: 0 },
       resizing: false,
       resizeLayer: null,
-      resizeStart: { x: 0, y: 0, width: 0, height: 0 }
+      resizeStart: { x: 0, y: 0, width: 0, height: 0 },
+      selectedLayerId: null,
     };
   },
   mounted() {
@@ -117,31 +118,87 @@ export default {
       if (e.button !== 0) return;
       this.dragging = true;
       this.dragLayer = layer;
+      const canvas = this.$el.querySelector('.canvas-area');
+      const rect = canvas.getBoundingClientRect();
       this.dragOffset = {
-        x: e.clientX - (layer.x || 0),
-        y: e.clientY - (layer.y || 0)
+        x: e.clientX - rect.left - (layer.x || 0),
+        y: e.clientY - rect.top - (layer.y || 0)
       };
       e.preventDefault();
     },
-    startResize(e, layer) {
+    startResize(e, layer, pos) {
       this.resizing = true;
       this.resizeLayer = layer;
       this.resizeStart = {
         x: e.clientX,
         y: e.clientY,
         width: layer.details.width || 200,
-        height: layer.details.height || 40
+        height: layer.details.height || 200,
+        pos: pos, // 'tl', 'tr', 'bl', 'br'
+        x0: layer.x,
+        y0: layer.y
       };
       e.preventDefault();
     },
     onDrag(e) {
       if (this.resizing && this.resizeLayer) {
+        const canvas = this.$el.querySelector('.canvas-area');
+        const rect = canvas.getBoundingClientRect();
         const dx = e.clientX - this.resizeStart.x;
         const dy = e.clientY - this.resizeStart.y;
-        let newWidth = Math.max(40, this.resizeStart.width + dx);
-        let newHeight = Math.max(24, this.resizeStart.height + dy);
+        let newWidth = this.resizeStart.width;
+        let newHeight = this.resizeStart.height;
+        let newX = this.resizeStart.x0;
+        let newY = this.resizeStart.y0;
+        switch (this.resizeStart.pos) {
+          case 'tl':
+            newWidth = Math.max(40, this.resizeStart.width - dx);
+            newHeight = Math.max(24, this.resizeStart.height - dy);
+            newX = this.resizeStart.x0 + dx;
+            newY = this.resizeStart.y0 + dy;
+            break;
+          case 'tr':
+            newWidth = Math.max(40, this.resizeStart.width + dx);
+            newHeight = Math.max(24, this.resizeStart.height - dy);
+            newX = this.resizeStart.x0;
+            newY = this.resizeStart.y0 + dy;
+            break;
+          case 'bl':
+            newWidth = Math.max(40, this.resizeStart.width - dx);
+            newHeight = Math.max(24, this.resizeStart.height + dy);
+            newX = this.resizeStart.x0 + dx;
+            newY = this.resizeStart.y0;
+            break;
+          case 'br':
+            newWidth = Math.max(40, this.resizeStart.width + dx);
+            newHeight = Math.max(24, this.resizeStart.height + dy);
+            newX = this.resizeStart.x0;
+            newY = this.resizeStart.y0;
+            break;
+        }
+        // Clamp to canvas bounds
+        // For left/top handles, clamp newX/newY >= 0
+        if (newX < 0) {
+          newWidth += newX; // shrink width if out of bounds
+          newX = 0;
+        }
+        if (newY < 0) {
+          newHeight += newY;
+          newY = 0;
+        }
+        // For right/bottom, clamp width/height so right/bottom edge stays in canvas
+        if (newX + newWidth > rect.width) {
+          newWidth = rect.width - newX;
+        }
+        if (newY + newHeight > rect.height) {
+          newHeight = rect.height - newY;
+        }
+        newWidth = Math.max(40, newWidth);
+        newHeight = Math.max(24, newHeight);
         this.resizeLayer.details.width = newWidth;
         this.resizeLayer.details.height = newHeight;
+        this.resizeLayer.x = newX;
+        this.resizeLayer.y = newY;
         return;
       }
       if (!this.dragging || !this.dragLayer) return;
@@ -198,10 +255,17 @@ export default {
         return;
       }
       try {
+        // Center the image in the canvas
+        const canvas = this.$el.querySelector('.canvas-area');
+        const rect = canvas.getBoundingClientRect();
+        const width = 200;
+        const height = 200;
+        const x = Math.max(0, Math.round((rect.width - width) / 2));
+        const y = Math.max(0, Math.round((rect.height - height) / 2));
         await fetch(`/api/v1/projects/${this.projectId}/images`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl, width: '200', height: '200' })
+          body: JSON.stringify({ imageUrl, width: String(width), height: String(height), x, y })
         });
         this.uploadSuccess = true;
         setTimeout(() => { this.uploadSuccess = false; }, 1500);
@@ -217,6 +281,13 @@ export default {
         this.uploadError = 'El texto no puede estar vacío';
         return;
       }
+      // Center the text in the canvas
+      const canvas = this.$el.querySelector('.canvas-area');
+      const rect = canvas.getBoundingClientRect();
+      const width = 200;
+      const height = 40;
+      const x = Math.max(0, Math.round((rect.width - width) / 2));
+      const y = Math.max(0, Math.round((rect.height - height) / 2));
       const body = {
         text: String(this.textInput),
         fontColor: String(this.fontColor),
@@ -224,7 +295,11 @@ export default {
         fontSize: Number(this.fontSize),
         isBold: false,
         isItalic: false,
-        isUnderlined: false
+        isUnderlined: false,
+        width,
+        height,
+        x,
+        y
       };
       if (isNaN(body.fontSize) || body.fontSize < 10 || body.fontSize > 100) {
         this.uploadError = 'El tamaño de fuente debe ser un número entre 10 y 100';
@@ -297,10 +372,6 @@ export default {
   box-shadow: 0 2px 8px rgba(0,0,0,0.10);
   border: 2px solid transparent;
   transition: border 0.2s;
-}
-.layer:hover, .layer:focus-within {
-  border: 2px solid #00b894;
-  z-index: 20;
 }
 
 .delete-btn {
@@ -425,72 +496,7 @@ export default {
   margin-left: 10px;
   font-weight: 500;
 }
-</style>
 
-<template>
-  <div class="design-canvas">
-    <!-- Selector de color de polo -->
-    <div class="color-selector">
-      <label>Color del polo:</label>
-      <div class="color-list">
-        <div
-          v-for="color in garmentColors"
-          :key="color.name"
-          :title="color.name"
-          :style="{ background: color.hex }"
-          class="color-box"
-          :class="{ selected: selectedColor === color.name }"
-          @click="selectColor(color.name)"
-        ></div>
-      </div>
-    </div>
-
-    <!-- Canvas de diseño -->
-    <div class="canvas-area" :style="canvasSpriteStyle">
-      <div
-        v-for="layer in layers"
-        :key="layer.id"
-        class="layer"
-        :style="layer.type === 'Image' ? imageStyle(layer) : textStyle(layer)"
-        @mousedown="startDrag($event, layer)"
-      >
-        <img v-if="layer.type === 'Image'" :src="layer.details.imageUrl" draggable="false" :style="{ width: layer.details.width + 'px', height: layer.details.height + 'px' }" />
-        <div v-else-if="layer.type === 'Text'"
-          :style="{ width: layer.details.width ? layer.details.width + 'px' : 'auto', height: layer.details.height ? layer.details.height + 'px' : 'auto', resize: 'both', overflow: 'auto', minWidth: '40px', minHeight: '24px', display: 'inline-block' }"
-          @mousedown.stop="startDrag($event, layer)">{{ layer.details.text }}</div>
-        <div v-if="layer.type === 'Image' || layer.type === 'Text'" class="resize-handle" @mousedown.stop="startResize($event, layer)"></div>
-        <button class="delete-btn" @click.stop="deleteLayer(layer.id)">x</button>
-      </div>
-    </div>
-
-    <!-- Subir imagen -->
-    <div class="upload-section">
-      <label>Subir imagen:</label>
-      <input type="file" @change="onImageUpload" accept="image/*" :disabled="uploading" />
-      <span v-if="uploading" class="upload-loader">Subiendo...</span>
-      <span v-if="uploadSuccess" class="upload-success">¡Imagen subida!</span>
-      <span v-if="uploadError" class="upload-error">{{ uploadError }}</span>
-    </div>
-
-    <!-- Agregar texto -->
-    <div class="text-section">
-      <label>Agregar texto:</label>
-      <input v-model="textInput" placeholder="Texto" />
-      <input v-model="fontColor" type="color" />
-      <select v-model="fontFamily">
-        <option value="Arial">Arial</option>
-        <option value="Verdana">Verdana</option>
-        <option value="Times New Roman">Times New Roman</option>
-      </select>
-      <input v-model.number="fontSize" type="number" min="10" max="100" />
-      <button @click="addTextLayer">Agregar texto</button>
-    </div>
-  </div>
-</template>
-
-
-
-<style scoped>
 /* Estilos mejorados para el canvas y controles */
 .design-canvas {
   min-height: 500px;
@@ -545,6 +551,35 @@ export default {
   cursor: pointer;
   font-size: 14px;
 }
+.selection-border {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border: 2px solid #2196f3;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 21;
+}
+
+.corner-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 2.5px solid #2196f3;
+  border-radius: 50%;
+  z-index: 22;
+  box-shadow: 0 1px 4px rgba(33,150,243,0.12);
+  cursor: pointer;
+  font-size: 14px;
+}
+.corner-handle.tl { top: -8px; left: -8px; cursor: nwse-resize; }
+.corner-handle.tr { top: -8px; right: -8px; cursor: nesw-resize; }
+.corner-handle.bl { bottom: -8px; left: -8px; cursor: nesw-resize; }
+.corner-handle.br { bottom: -8px; right: -8px; cursor: nwse-resize; }
+
 /* Loader y feedback para subida de imagen */
 .upload-loader {
   color: #ffd600;
@@ -559,3 +594,70 @@ export default {
   margin-left: 10px;
 }
 </style>
+
+<template>
+  <div class="design-canvas">
+    <!-- Selector de color de polo -->
+    <div class="color-selector">
+      <label>Color del polo:</label>
+      <div class="color-list">
+        <div
+          v-for="color in garmentColors"
+          :key="color.name"
+          :title="color.name"
+          :style="{ background: color.hex }"
+          class="color-box"
+          :class="{ selected: selectedColor === color.name }"
+          @click="selectColor(color.name)"
+        ></div>
+      </div>
+    </div>
+
+    <!-- Canvas de diseño -->
+    <div class="canvas-area" :style="canvasSpriteStyle" @click.self="selectedLayerId = null">
+      <div
+        v-for="layer in layers"
+        :key="layer.id"
+        class="layer"
+        :style="layer.type === 'Image' ? { left: layer.x + 'px', top: layer.y + 'px', width: layer.details.width + 'px', height: layer.details.height + 'px', zIndex: layer.z || 1 } : textStyle(layer)"
+        @mousedown="startDrag($event, layer)"
+        @click.stop="selectedLayerId = layer.id"
+      >
+        <!-- Blue selection border -->
+        <div v-if="selectedLayerId === layer.id" class="selection-border"></div>
+        <img v-if="layer.type === 'Image'" :src="layer.details.imageUrl" draggable="false" style="width: 100%; height: 100%; display: block;" />
+        <!-- Four corner resize handles for images -->
+        <template v-if="layer.type === 'Image' && selectedLayerId === layer.id">
+          <div v-for="pos in ['tl','tr','bl','br']" :key="pos" :class="['corner-handle', pos]" @mousedown.stop="startResize($event, layer, pos)"></div>
+        </template>
+        <div v-else-if="layer.type === 'Text'"
+          :style="{ width: layer.details.width ? layer.details.width + 'px' : 'auto', height: layer.details.height ? layer.details.height + 'px' : 'auto', resize: 'both', overflow: 'auto', minWidth: '40px', minHeight: '24px', display: 'inline-block' }"
+          @mousedown.stop="startDrag($event, layer)">{{ layer.details.text }}</div>
+        <button class="delete-btn" @click.stop="deleteLayer(layer.id)">x</button>
+      </div>
+    </div>
+
+    <!-- Subir imagen -->
+    <div class="upload-section">
+      <label>Subir imagen:</label>
+      <input type="file" @change="onImageUpload" accept="image/*" :disabled="uploading" />
+      <span v-if="uploading" class="upload-loader">Subiendo...</span>
+      <span v-if="uploadSuccess" class="upload-success">¡Imagen subida!</span>
+      <span v-if="uploadError" class="upload-error">{{ uploadError }}</span>
+    </div>
+
+    <!-- Agregar texto -->
+    <div class="text-section">
+      <label>Agregar texto:</label>
+      <input v-model="textInput" placeholder="Texto" />
+      <input v-model="fontColor" type="color" />
+      <select v-model="fontFamily">
+        <option value="Arial">Arial</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Times New Roman">Times New Roman</option>
+      </select>
+      <input v-model.number="fontSize" type="number" min="10" max="100" />
+      <button @click="addTextLayer">Agregar texto</button>
+    </div>
+  </div>
+</template>
