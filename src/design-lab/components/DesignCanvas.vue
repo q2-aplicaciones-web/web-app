@@ -21,22 +21,27 @@
       </div>
     </div>
 
-    <div class="prime-row minimal-row">
-      <FileUpload mode="basic" name="file" accept="image/*" :auto="true" chooseIcon="pi pi-upload" chooseLabel="Upload Image" class="minimal-btn fileupload-full-width" :disabled="uploading" @select="onPrimeFileUpload" :customUpload="true" @uploader="onPrimeFileUpload" />
-      <span v-if="uploading" class="upload-loader"><i class="pi pi-spin pi-spinner"></i></span>
-      <span v-if="uploadSuccess" class="upload-success"><i class="pi pi-check"></i></span>
-      <span v-if="uploadError" class="upload-error"><i class="pi pi-exclamation-triangle"></i></span>
+    <!-- Upload Button Section -->
+    <div class="upload-section-sep">
+      <div class="prime-row minimal-row">
+        <FileUpload mode="basic" name="file" accept="image/*" :auto="true" chooseIcon="pi pi-upload" chooseLabel="Upload Image" class="minimal-btn fileupload-full-width" :disabled="uploading" @select="onPrimeFileUpload" :customUpload="true" @uploader="onPrimeFileUpload" />
+        <span v-if="uploading" class="upload-loader"><i class="pi pi-spin pi-spinner"></i></span>
+        <span v-if="uploadSuccess" class="upload-success"><i class="pi pi-check"></i></span>
+        <span v-if="uploadError" class="upload-error"><i class="pi pi-exclamation-triangle"></i></span>
+      </div>
     </div>
 
-    <div class="prime-row minimal-row">
-      <InputText v-model="textInput" placeholder="Texto" class="minimal-input" style="flex: 1;" />
-    </div>
-
-    <div class="prime-row minimal-row" >
-      <Dropdown v-model="fontFamily" :options="fontOptions" class="minimal-input" optionLabel="label" optionValue="value" />
-      <InputNumber v-model="fontSize" :min="10" :max="100" class="minimal-input" style="width:auto; margin-right: 8px;" />
-      <ColorPicker v-model="fontColor" class="minimal-input" />
-      <Button icon="pi pi-plus" class="prime-btn minimal-btn" @click="addTextLayer" />
+    <!-- Text Options Section -->
+    <div class="text-options-sep">
+      <div class="prime-row minimal-row">
+        <InputText v-model="textInput" placeholder="Texto" class="minimal-input" style="flex: 1;" />
+      </div>
+      <div class="prime-row minimal-row" >
+        <Dropdown v-model="fontFamily" :options="fontOptions" class="minimal-input" optionLabel="label" optionValue="value" />
+        <InputNumber v-model="fontSize" :min="10" :max="100" class="minimal-input" style="width:auto; margin-right: 8px;" />
+        <ColorPicker v-model="fontColor" class="minimal-input" />
+        <Button icon="pi pi-plus" class="prime-btn minimal-btn" @click="addTextLayer" />
+      </div>
     </div>
 
     <!-- Add PrimeVue ContextMenu component -->
@@ -621,5 +626,24 @@ export default {
   width: 100% !important;
   min-width: 0 !important;
   box-sizing: border-box;
+}
+
+.upload-section-sep,
+.text-options-sep {
+  background: #232323;
+  border-radius: 12px;
+  padding: 18px 18px 14px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 14px; /* Add vertical separation between the two inner divs */
+}
+.text-options-sep {
+  padding-bottom: 10px;
 }
 </style>
