@@ -68,7 +68,7 @@ import Card from 'primevue/card';
 import Button from 'primevue/button';
 import cartService from '../../orders-processing/services/cart.service.js';
 import { CartItem } from '../../orders-processing/models/cart.entity.js';
-import { authenticationService } from '../../iam/services/authentication.service.js';
+import { UserService } from '../../user_management/services/user.service.js';
 
 const cart = ref(null);
 const userId = ref(null);
@@ -132,7 +132,7 @@ function updateCartOnServer() {
 }
 
 onMounted(async () => {
-  userId.value = authenticationService.currentUserId.value || import.meta.env.VITE_DEFAULT_USER_ID;
+  userId.value = await UserService.getSessionUserId();
   await loadCart();
 });
 </script>

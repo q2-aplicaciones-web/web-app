@@ -28,7 +28,7 @@
 import { defineProps, ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import ProductService from '../../product-catalog/services/product.service';
-import { authenticationService } from '../../iam/services/authentication.service.js';
+import { UserService } from '../../user_management/services/user.service';
 
 const props = defineProps({
   productId: [String, Number],
@@ -66,12 +66,7 @@ async function fetchProductAndUser(id) {
       const userId = product.value.projectDetails?.userId || product.value.userId;
       if (userId) {
         try {
-          // For now, use a mock user object since UserService is removed
-          user.value = {
-            id: userId,
-            username: `User ${userId}`,
-            // You can extend this with actual user data when available
-          };
+          user.value = await UserService.getUserById(userId);
         } catch (e) {
           user.value = null;
         }

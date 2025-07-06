@@ -1,4 +1,4 @@
-import { authenticationService } from '../../iam/services/authentication.service.js';
+import { UserService } from '../../user_management/services/user.service.js';
 import { useFulfillmentService } from './fulfillment.service.js';
 import { env } from '../../env.js';
 
@@ -7,7 +7,7 @@ export function useManufacturerOrders() {
 
   async function getManufacturerOrders() {
     // 1. Obtener el usuario de sesión
-    const userId = authenticationService.currentUserId.value || import.meta.env.VITE_DEFAULT_USER_ID;
+    const userId = await UserService.getSessionUserId();
     // 2. Buscar manufacturer por user_id
     const res = await fetch(`${env.apiBaseUrl}/manufacturers?user_id=${userId}`);
     const manufacturers = await res.json();
@@ -24,11 +24,7 @@ export function useManufacturerOrders() {
           if (!orderRes.ok) return null;
           const order = await orderRes.json();
           if (!order) return null;
-          const customer = {
-            id: order.user_id,
-            username: `User ${order.user_id}`,
-            // Mock customer data - replace with actual user service when available
-          };
+          const customer = await UserService.getUserById(order.user_id);
           return {
             id: f.id,
             orderId: order.id,
