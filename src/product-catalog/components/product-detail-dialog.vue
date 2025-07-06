@@ -1,4 +1,4 @@
-<template>
+template>
   <Dialog v-model:visible="internalVisible" modal header="Product Details" :closable="true">
     <div v-if="product">
       <img v-if="product.gallery?.length" :src="product.gallery[0]" :alt="product.projectDetails?.name || product.name" style="width:100%;max-width:300px;border-radius:8px;margin-bottom:1rem;" />
@@ -7,7 +7,7 @@
         <p><strong>Price:</strong> S/. {{ product.price?.toFixed ? product.price.toFixed(2) : product.price }}</p>
         <p><strong>Color:</strong> <span :style="{ backgroundColor: product.projectDetails?.garmentColor, display: 'inline-block', width: '16px', height: '16px', border: '1px solid #ccc', marginRight: '6px', verticalAlign: 'middle' }" class="color-box"></span> {{ product.projectDetails?.garmentColor }}</p>
         <p><strong>Size:</strong> {{ product.projectDetails?.garmentSize }}</p>
-        <p><strong>Gender:</strong> {{ product.projectDetails?.gender }}</p>
+        <p>trong>Gender:</strong> {{ product.projectDetails?.gender }}</p>
         <p><strong>Rating:</strong> {{ product.rating }}</p>
         <p><strong>Likes:</strong> {{ product.likes }}</p>
         <p><strong>Tags:</strong> {{ product.tags?.join(', ') }}</p>

@@ -19,7 +19,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import ProductCard from './product-card.vue';
-import ProductDetailDialog from './product-detail-dialog.vue';
 import productService from '../services/product.service.js';
 
 const products = ref([]);
