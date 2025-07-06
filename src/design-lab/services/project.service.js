@@ -1,6 +1,6 @@
 import axios from "axios";
 import { ProjectAssembler } from "./project.assembler";
-import { UserService } from "../../user_management/services/user.service";
+import { authenticationService } from "../../iam/services/authentication.service.js";
 
 const baseUrl =
     import.meta.env.VITE_FAKE_API_BASE_URL || "http://localhost:3000";
@@ -15,7 +15,7 @@ export class ProjectService {
     static async getProjects() {
         console.log("Fetching projects...");
         console.log(baseUrl);
-        const userId = await UserService.getSessionUserId(); // Change this when user service is available
+        const userId = authenticationService.currentUserId.value || import.meta.env.VITE_DEFAULT_USER_ID || "user-1";
         try {
             const data = await http
                 .get(`/projects?user_id=${userId}`)

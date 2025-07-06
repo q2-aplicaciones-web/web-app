@@ -9,15 +9,23 @@ import OverlayPanel from "primevue/overlaypanel";
 import { useRouter, useRoute } from "vue-router";
 import { ref, computed, provide, watch, nextTick, getCurrentInstance, onMounted, onUnmounted } from "vue";
 import ShoppingCartPopover from "./orders-processing/components/shopping-cart-popover.vue";
-import { useRoleDomain } from "./access-security/services/role-domain.service";
+import { authenticationService } from "./iam/services/authentication.service.js";
 
 const router = useRouter();
 const route = useRoute();
-const { currentRole, hasPermission, ROLES } = useRoleDomain();
+
+// Authentication reactive state
+const isSignedIn = computed(() => authenticationService.isSignedIn.value);
+const currentUsername = computed(() => authenticationService.currentUsername.value);
+
+// Check if current route is an authentication route
+const isAuthRoute = computed(() => {
+  return ['sign-in', 'sign-up'].includes(route.name);
+});
 
 // Check if user has manufacturer role
 const isManufacturer = computed(() => {
-  return currentRole.value === ROLES.MANUFACTURER || currentRole.value === ROLES.ADMIN;
+  return authenticationService.isManufacturer();
 });
 
 // Setup reactivity for menu based on role changes
@@ -30,8 +38,13 @@ const editableTitle = ref('');
 const titleInput = ref(null);
 const updateProjectFunction = ref(null);
 const overlayPanelRef = ref(null);
-const currentUserId = ref("user-1"); // Simulación: el usuario actual es el 1
+const currentUserId = ref(authenticationService.currentUserId.value || "user-1");
 const currencyCode = ref('PEN'); // Permite cambiar el tipo de moneda
+
+// Watch for user ID changes
+watch(() => authenticationService.currentUserId.value, (newUserId) => {
+  currentUserId.value = newUserId || "user-1";
+});
 
 // Provide the dynamic title so child components can update it
 provide('pageTitle', {
@@ -164,6 +177,34 @@ function buildMenuItems() {
       }
     });
   }
+
+  // Add settings if user is authenticated
+  if (isSignedIn.value) {
+    baseItems.push({
+      label: "Settings",
+      icon: "pi pi-cog",
+      command: () => {
+        router.push("/settings");
+      },
+    });
+  }
+
+  // Add separator and sign out at the bottom
+  if (isSignedIn.value) {
+    baseItems.push(
+      { separator: true },
+      {
+        label: "Sign Out",
+        icon: "pi pi-sign-out",
+        command: () => {
+          if (confirm('Are you sure you want to sign out?')) {
+            authenticationService.signOut();
+            router.push('/sign-in');
+          }
+        },
+      }
+    );
+  }
   
   return baseItems;
 }
@@ -171,24 +212,11 @@ function buildMenuItems() {
 // Initialize menu items
 menuItems.value = buildMenuItems();
 
-// Listen for role changes and update menu
+// Listen for authentication state changes and update menu
 onMounted(() => {
-  const unsubscribe = useRoleDomain().onRoleChange(() => {
+  // Watch for role/authentication changes
+  watch([isSignedIn, isManufacturer], () => {
     menuItems.value = buildMenuItems();
-  });
-  
-  // Cleanup on component unmount
-  onUnmounted(() => {
-    if (unsubscribe) unsubscribe();
-  });
-  
-  // Add settings to menu
-  menuItems.value.push({
-    label: "Settings",
-    icon: "pi pi-cog",
-    command: () => {
-      router.push("/settings");
-    },
   });
 });
 </script>
@@ -196,7 +224,8 @@ onMounted(() => {
 <template>
     <Toast />
     <main>
-        <section class="content">
+        <!-- Show navigation only for authenticated users on protected routes -->
+        <section v-if="isSignedIn && !isAuthRoute" class="content">
             <Toolbar>
                 <template #start>
                     <div class="title-container">
@@ -234,37 +263,47 @@ onMounted(() => {
                 </template>
                 <template #end>
                     <div class="user-menu">
-                        <Button
-                            label="Create"
-                            icon="pi pi-plus"
-                            severity="primary"
-                            @click="router.push('/design-lab/new')"
-                        />
-                        <Button
-                            icon="pi pi-shopping-cart"
-                            severity="secondary"
-                            rounded
-                            text
-                            aria-label="Cart"
-                            @click="showCartPopover"
-                        />
-                        <OverlayPanel ref="overlayPanelRef">
-                            <ShoppingCartPopover :user-id="currentUserId" :currency-code="currencyCode" />
-                        </OverlayPanel>
-                        <Button
-                            icon="pi pi-user"
-                            severity="secondary"
-                            rounded
-                            text
-                            aria-label="Profile"
-                            @click="router.push('/profile')"
-                        />
+                        <!-- Authenticated user toolbar -->
+                        <template v-if="isSignedIn">
+                            <Button
+                                label="Create"
+                                icon="pi pi-plus"
+                                severity="primary"
+                                @click="router.push('/design-lab/new')"
+                            />
+                            <Button
+                                icon="pi pi-shopping-cart"
+                                severity="secondary"
+                                rounded
+                                text
+                                aria-label="Cart"
+                                @click="showCartPopover"
+                            />
+                            <OverlayPanel ref="overlayPanelRef">
+                                <ShoppingCartPopover :user-id="currentUserId" :currency-code="currencyCode" />
+                            </OverlayPanel>
+                            <Button
+                                icon="pi pi-user"
+                                severity="secondary"
+                                rounded
+                                text
+                                aria-label="Profile"
+                                @click="router.push('/profile')"
+                            />
+                        </template>
                     </div>
                 </template>
             </Toolbar>
             <router-view />
         </section>
-        <div class="sidebar">
+        
+        <!-- Show only router-view for auth routes -->
+        <section v-else class="auth-content">
+            <router-view />
+        </section>
+        
+        <!-- Sidebar for authenticated users -->
+        <div v-if="isSignedIn && !isAuthRoute" class="sidebar">
             <Menu :model="menuItems" />
         </div>
     </main>
@@ -278,6 +317,13 @@ main {
 
 .content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.auth-content {
+    flex: 1;
+    width: 100%;
     display: flex;
     flex-direction: column;
 }
