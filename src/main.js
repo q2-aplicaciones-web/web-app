@@ -6,11 +6,13 @@ import "primeflex/primeflex.css";
 import "primeicons/primeicons.css";
 import Aura from "@primeuix/themes/aura";
 import router from "./router/index.js";
+import { i18n } from "./i18n.js";
 import ToastService from "primevue/toastservice";
 import Toast from "primevue/toast";
 
 const app = createApp(App)
     .use(router)
+    .use(i18n)
     .use(PrimeVue, { ripple: true, theme: { preset: Aura } })
     .use(ToastService);
 
