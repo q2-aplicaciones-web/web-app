@@ -57,6 +57,7 @@ import ColorPicker from 'primevue/colorpicker';
 import Dropdown from 'primevue/dropdown';
 import InputNumber from 'primevue/inputnumber';
 import ContextMenu from 'primevue/contextmenu';
+import designLabService from '../services/design-lab.service.js';
 export default {
   name: 'DesignCanvas',
   components: { Button, FileUpload, InputText, ColorPicker, Dropdown, InputNumber, ContextMenu },
@@ -382,27 +383,14 @@ export default {
       }
       this.uploadError = '';
       try {
-        const res = await fetch(`/api/v1/projects/${this.projectId}/texts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        if (!res.ok) {
-          let errMsg = 'Error al crear la capa de texto';
-          try {
-            const err = await res.json();
-            if (err && err.message) errMsg = err.message;
-          } catch {}
-          this.uploadError = errMsg;
-          return;
-        }
+        await designLabService.createTextLayer(this.projectId, body);
         this.textInput = '';
         this.fontColor = '#000000';
         this.fontFamily = 'Arial';
         this.fontSize = 24;
         this.$emit('refreshLayers');
       } catch (e) {
-        this.uploadError = 'Error de red al crear la capa de texto';
+        this.uploadError = e?.message || 'Error al crear la capa de texto';
       }
     },
     async deleteLayer(layerId) {

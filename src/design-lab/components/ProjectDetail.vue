@@ -99,6 +99,32 @@ const retryLoad = () => {
 const selectedLayer = ref(null);
 const editableLayers = ref([]);
 
+// Color normalization utility
+const garmentColors = [
+  { name: 'Black', hex: '#161615' },
+  { name: 'Gray', hex: '#403D3B' },
+  { name: 'LightGray', hex: '#B3B1AF' },
+  { name: 'White', hex: '#EDEDED' },
+  { name: 'Red', hex: '#B51B14' },
+  { name: 'Pink', hex: '#F459B0' },
+  { name: 'LightPurple', hex: '#D890E4' },
+  { name: 'Purple', hex: '#693FA0' },
+  { name: 'LightBlue', hex: '#00A5BC' },
+  { name: 'Cyan', hex: '#31B7C9' },
+  { name: 'SkyBlue', hex: '#3F9BDC' },
+  { name: 'Blue', hex: '#1B3D92' },
+  { name: 'Green', hex: '#1B8937' },
+  { name: 'LightGreen', hex: '#5BBE65' },
+  { name: 'Yellow', hex: '#FECD08' },
+  { name: 'DarkYellow', hex: '#F2AB00' }
+];
+function normalizeFontColor(color) {
+  if (!color) return '#000000';
+  if (typeof color === 'string' && color.startsWith('#')) return color;
+  const found = garmentColors.find(c => c.name.toLowerCase() === String(color).toLowerCase());
+  return found ? found.hex : '#000000';
+}
+
 // Sincroniza editableLayers con el backend cuando cambia el proyecto
 watch(() => project.value?.layers, (newLayers) => {
   if (!newLayers) {
@@ -117,7 +143,7 @@ watch(() => project.value?.layers, (newLayers) => {
         z: layer.z ?? layer.z_index ?? 1,
         details: {
           text: details.text ?? layer.text ?? '',
-          fontColor: details.fontColor ?? details.font_color ?? layer.fontColor ?? layer.font_color ?? '#000',
+          fontColor: normalizeFontColor(details.fontColor ?? details.font_color ?? layer.fontColor ?? layer.font_color ?? '#000'),
           fontFamily: details.fontFamily ?? details.font_family ?? layer.fontFamily ?? layer.font_family ?? 'Arial',
           fontSize: details.fontSize ?? details.font_size ?? layer.fontSize ?? layer.font_size ?? 24,
           isBold: details.isBold ?? details.is_bold ?? layer.isBold ?? layer.is_bold ?? false,
