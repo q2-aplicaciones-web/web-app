@@ -427,5 +427,10 @@
       "success": "Image uploaded successfully!",
       "error": "Failed to upload image. Please try again."
     }
+  },
+  "language": {
+    "switch": "Language",
+    "english": "English",
+    "spanish": "Spanish"
   }
 }
