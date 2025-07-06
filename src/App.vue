@@ -7,9 +7,10 @@ import Toolbar from "primevue/toolbar";
 import Toast from "primevue/toast";
 import OverlayPanel from "primevue/overlaypanel";
 import { useRouter, useRoute } from "vue-router";
-import { ref, computed, provide, watch, nextTick, getCurrentInstance, onMounted, onUnmounted } from "vue";
+import { ref, computed, provide, watch, nextTick, onMounted, onUnmounted } from "vue";
 import ShoppingCartPopover from "./orders-processing/components/shopping-cart-popover.vue";
 import { authenticationService } from "./iam/services/authentication.service.js";
+import { useI18n } from 'vue-i18n';
 
 const router = useRouter();
 const route = useRoute();
@@ -219,6 +220,13 @@ onMounted(() => {
     menuItems.value = buildMenuItems();
   });
 });
+
+// i18n setup
+const { locale, t } = useI18n();
+
+function toggleLanguage() {
+  locale.value = locale.value === 'en' ? 'es' : 'en';
+}
 </script>
 
 <template>
@@ -282,6 +290,16 @@ onMounted(() => {
                             <OverlayPanel ref="overlayPanelRef">
                                 <ShoppingCartPopover :user-id="currentUserId" :currency-code="currencyCode" />
                             </OverlayPanel>
+                            <Button
+                                :label="t('language')"
+                                icon="pi pi-globe"
+                                severity="secondary"
+                                rounded
+                                text
+                                aria-label="Change language"
+                                @click="toggleLanguage"
+                                style="margin-left: 0.5rem;"
+                            />
                             <Button
                                 icon="pi pi-user"
                                 severity="secondary"
