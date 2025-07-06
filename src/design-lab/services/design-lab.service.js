@@ -263,8 +263,6 @@ export class DesignLabService {
                 y: Math.round(Number(coords.y)),
                 z: Math.round(Number(coords.z))
             };
-            // Log the sanitized payload for debugging
-            console.log('Layer coordinates update payload:', JSON.stringify(payload, null, 2));
             const apiResponse = await designLabApiService.updateLayerCoordinates(projectId, layerId, payload);
             return DesignLabAssembler.toLayerEntity(apiResponse);
         } catch (error) {
