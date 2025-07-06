@@ -247,6 +247,32 @@ export class DesignLabService {
         }
     }
 
+    /**
+     * Update layer coordinates (x, y, z)
+     * @param {string} projectId - Project UUID
+     * @param {string} layerId - Layer UUID
+     * @param {Object} coords - Coordinates { x, y, z }
+     * @returns {Promise<Object>} Updated layer
+     */
+    async updateLayerCoordinates(projectId, layerId, coords) {
+        try {
+            // Only send x, y, z as numbers
+            // Some backends require integer coordinates
+            const payload = {
+                x: Math.round(Number(coords.x)),
+                y: Math.round(Number(coords.y)),
+                z: Math.round(Number(coords.z))
+            };
+            // Log the sanitized payload for debugging
+            console.log('Layer coordinates update payload:', JSON.stringify(payload, null, 2));
+            const apiResponse = await designLabApiService.updateLayerCoordinates(projectId, layerId, payload);
+            return DesignLabAssembler.toLayerEntity(apiResponse);
+        } catch (error) {
+            console.error('Error updating layer coordinates:', error);
+            throw DesignLabAssembler.toApiErrorEntity(error);
+        }
+    }
+
     // ==================== GARMENT COLOR OPERATIONS ====================
 
     /**
