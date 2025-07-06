@@ -24,7 +24,7 @@
     <!-- Upload Button Section -->
     <div class="upload-section-sep">
       <div class="prime-row minimal-row">
-        <FileUpload mode="basic" name="file" accept="image/*" :auto="true" chooseIcon="pi pi-upload" chooseLabel="Upload Image" class="minimal-btn fileupload-full-width" :disabled="uploading" @select="onPrimeFileUpload" :customUpload="true" @uploader="onPrimeFileUpload" />
+        <FileUpload mode="basic" name="file" accept="image/*" :auto="true" chooseIcon="pi pi-upload" chooseLabel="Upload Image" class="minimal-btn fileupload-full-width" :disabled="uploading" @select="onPrimeFileUpload" :customUpload="true" />
         <span v-if="uploading" class="upload-loader"><i class="pi pi-spin pi-spinner"></i></span>
         <span v-if="uploadSuccess" class="upload-success"><i class="pi pi-check"></i></span>
         <span v-if="uploadError" class="upload-error"><i class="pi pi-exclamation-triangle"></i></span>
