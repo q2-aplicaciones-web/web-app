@@ -1,7 +1,7 @@
 <template>
   <div class="project-detail">
     <div class="project-header">
-      <h1>{{ project?.title || 'Loading Project...' }}</h1>
+      <div class="header-title">{{ project?.title || 'Project Detail' }}</div>
       <div class="project-actions">
         <Button label="Back to Projects" icon="pi pi-arrow-left" severity="secondary" size="small" @click="goBack" />
         <Button :label="loading ? 'Saving...' : 'Save Project'" icon="pi pi-save" severity="primary" size="small" :loading="loading" :disabled="loading" @click="saveProject" />
@@ -9,28 +9,28 @@
     </div>
 
     <div class="editor-container">
-      <!-- Left Panel - Tools -->
-
-      <!-- Center - Canvas Area -->
-      <div class="canvas-container">
-        <div v-if="error" class="error-state">
-          <p>{{ error }}</p>
-          <Button label="Retry" severity="secondary" @click="retryLoad" />
-        </div>
-        <div v-else-if="loading" class="loading-state">
-          <p>Loading project...</p>
-        </div>
-        <div v-else-if="project" class="canvas-area">
-          <!-- Garment Display replaced with DesignCanvas -->
-          <DesignCanvas
-            :project="project"
-            :layers="layers"
-            :selectedLayer="selectedLayer"
-            @layer-selected="handleLayerSelected"
-            @layer-moved="handleLayerMoved"
-            @layer-resized="handleLayerResized"
-            @layer-updated="handleLayerUpdated"
-          />
+      <div class="canvas-center-wrapper">
+        <div class="canvas-container">
+          <div v-if="error" class="error-state">
+            <p>{{ error }}</p>
+            <Button label="Retry" severity="secondary" @click="retryLoad" />
+          </div>
+          <div v-else-if="loading" class="loading-state">
+            <p>Loading project...</p>
+          </div>
+          <div v-else-if="project" class="canvas-area">
+            <!-- Garment Display replaced with DesignCanvas -->
+            <DesignCanvas
+              :projectId="project?.id"
+              :layers="layers"
+              :selectedLayer="selectedLayer"
+              @layer-selected="handleLayerSelected"
+              @layer-moved="handleLayerMoved"
+              @layer-resized="handleLayerResized"
+              @layer-updated="handleLayerUpdated"
+              @refreshLayers="refreshLayers"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -38,13 +38,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjects } from '../composables/useProjects.js'
 import { authenticationService } from '../../iam/services/authentication.service.js'
 import cloudinaryService from '../services/cloudinary.service.js'
-import Button from 'primevue/button';
-import DesignCanvas from './DesignCanvas.vue';
+import designLabService from '../services/design-lab.service.js'
+import Button from 'primevue/button'
+import DesignCanvas from './DesignCanvas.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -55,17 +56,18 @@ const projectId = computed(() => route.params.id)
 // Use projects composable
 const {
   currentProject: project,
-  loading,
-  error,
   loadProject
 } = useProjects()
+
+// Local loading and error state
+const loading = ref(false)
+const error = ref('')
 
 // Computed garment style
 const garmentStyle = computed(() => {
   if (!project.value?.color) {
     return cloudinaryService.getDefaultGarmentStyle(500);
   }
-  
   return cloudinaryService.getGarmentColorStyle(project.value.color, 500);
 })
 
@@ -75,16 +77,10 @@ onMounted(async () => {
     router.push('/sign-in');
     return;
   }
-  
   if (projectId.value) {
     await loadProject(projectId.value);
   }
 })
-
-const saveProject = async () => {
-  if (!project.value) return
-  // TODO: Implement save functionality
-}
 
 const goBack = () => {
   router.push('/design-lab')
@@ -96,37 +92,158 @@ const retryLoad = () => {
   }
 }
 
+// --- Layer State Management ---
 const selectedLayer = ref(null);
-const layers = computed(() => project.value?.layers || []);
+const editableLayers = ref([]);
 
-const handleLayerSelected = (layer) => {
-  selectedLayer.value = layer;
-};
-
-const handleLayerMoved = (layerId, pos) => {
-  const layer = layers.value.find(l => l.id === layerId);
-  if (layer) {
-    layer.x = pos.x;
-    layer.y = pos.y;
+// Sincroniza editableLayers con el backend cuando cambia el proyecto
+watch(() => project.value?.layers, (newLayers) => {
+  if (!newLayers) {
+    editableLayers.value = [];
+    return;
   }
-};
+  editableLayers.value = newLayers.map(layer => {
+    const type = (layer.type || layer.layer_type || '').toLowerCase();
+    if (type === 'text') {
+      const details = layer.details || {};
+      return {
+        id: layer.id,
+        type: 'Text',
+        x: layer.x ?? layer.x_pos ?? 50,
+        y: layer.y ?? layer.y_pos ?? 50,
+        z: layer.z ?? layer.z_index ?? 1,
+        details: {
+          text: details.text ?? layer.text ?? '',
+          fontColor: details.fontColor ?? details.font_color ?? layer.fontColor ?? layer.font_color ?? '#000',
+          fontFamily: details.fontFamily ?? details.font_family ?? layer.fontFamily ?? layer.font_family ?? 'Arial',
+          fontSize: details.fontSize ?? details.font_size ?? layer.fontSize ?? layer.font_size ?? 24,
+          isBold: details.isBold ?? details.is_bold ?? layer.isBold ?? layer.is_bold ?? false,
+          isItalic: details.isItalic ?? details.is_italic ?? layer.isItalic ?? layer.is_italic ?? false,
+          isUnderlined: details.isUnderlined ?? details.is_underlined ?? layer.isUnderlined ?? layer.is_underlined ?? false
+        }
+      }
+    }
+    if (type === 'image') {
+      const details = layer.details || {};
+      return {
+        id: layer.id,
+        type: 'Image',
+        x: layer.x ?? layer.x_pos ?? 50,
+        y: layer.y ?? layer.y_pos ?? 50,
+        z: layer.z ?? layer.z_index ?? 1,
+        details: {
+          imageUrl: details.imageUrl ?? details.image_url ?? layer.imageUrl ?? layer.image_url ?? '',
+          width: details.width ?? layer.width ?? 200,
+          height: details.height ?? layer.height ?? 200
+        }
+      }
+    }
+    return {
+      ...layer,
+      x: layer.x ?? layer.x_pos ?? 50,
+      y: layer.y ?? layer.y_pos ?? 50,
+      z: layer.z ?? layer.z_index ?? 1
+    };
+  });
+}, { immediate: true });
 
-const handleLayerResized = (layerId, size) => {
-  const layer = layers.value.find(l => l.id === layerId);
-  if (layer) {
-    layer.x = size.x;
-    layer.y = size.y;
-    layer.width = size.width;
-    layer.height = size.height;
-  }
-};
+const layers = computed(() => editableLayers.value);
 
-const handleLayerUpdated = (layerId, data) => {
-  const layer = layers.value.find(l => l.id === layerId);
-  if (layer) {
-    Object.assign(layer, data);
+function handleLayerSelected(layer) {
+  // Solo selecciona la capa si existe en el array, nunca modifica el array
+  if (!layer || !layer.id) return;
+  const found = editableLayers.value.find(l => l.id === layer.id);
+  if (found) {
+    selectedLayer.value = found;
+  } else {
+    selectedLayer.value = null;
   }
-};
+}
+
+function handleLayerMoved(layerId, pos) {
+  const idx = editableLayers.value.findIndex(l => l.id === layerId);
+  if (idx !== -1) {
+    editableLayers.value[idx].x = pos.x;
+    editableLayers.value[idx].y = pos.y;
+  }
+}
+
+function handleLayerResized(layerId, size) {
+  const idx = editableLayers.value.findIndex(l => l.id === layerId);
+  if (idx !== -1) {
+    editableLayers.value[idx].x = size.x;
+    editableLayers.value[idx].y = size.y;
+    if (editableLayers.value[idx].details) {
+      editableLayers.value[idx].details.width = size.width;
+      editableLayers.value[idx].details.height = size.height;
+    }
+  }
+}
+
+function handleLayerUpdated(layerId, data) {
+  const idx = editableLayers.value.findIndex(l => l.id === layerId);
+  if (idx !== -1) {
+    Object.assign(editableLayers.value[idx], data);
+  }
+}
+
+// Refresca capas tras añadir/editar/eliminar (sin recargar la página)
+async function refreshLayers() {
+  if (projectId.value) {
+    await loadProject(projectId.value);
+  }
+}
+
+// Guardar cambios de layers (posición, z, etc) en el backend
+async function saveProject() {
+  if (!project.value) return;
+  loading.value = true;
+  error.value = '';
+  try {
+    // Guardar cada layer según su tipo
+    const promises = editableLayers.value.map(async layer => {
+      if (layer.type === 'Text') {
+        // 1. Update text details (only details fields)
+        const textDetails = { ...layer.details };
+        console.log('Text layer update payload:', textDetails);
+        await designLabService.updateTextLayerDetails(
+          project.value.id,
+          layer.id,
+          textDetails
+        );
+      } else if (layer.type === 'Image') {
+        // 1. Update image details (only details fields)
+        // Backend expects imageUrl, width, height (all as string)
+        const imageDetails = {
+          imageUrl: String(layer.details.imageUrl || ''),
+          width: String(layer.details.width || ''),
+          height: String(layer.details.height || '')
+        };
+        console.log('Image layer update payload:', imageDetails);
+        await designLabService.updateImageLayerDetails(
+          project.value.id,
+          layer.id,
+          imageDetails
+        );
+      }
+      // 2. Update coordinates for all layers
+      const coords = { x: layer.x, y: layer.y, z: layer.z };
+      console.log('Layer coordinates update payload:', coords);
+      await designLabService.updateLayerCoordinates(
+        project.value.id,
+        layer.id,
+        coords
+      );
+    });
+    await Promise.all(promises);
+    await refreshLayers();
+  } catch (e) {
+    console.error('Save error:', e?.response?.data || e);
+    error.value = 'Error al guardar los cambios.';
+  } finally {
+    loading.value = false;
+  }
+}
 </script>
 
 <style scoped>
@@ -136,17 +253,23 @@ const handleLayerUpdated = (layerId, data) => {
   flex-direction: column;
 }
 
+
 .project-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  border-bottom: 1px solid #ddd;
+  align-items: flex-start;
+  padding: 1.5rem 2.5rem 0.5rem 2.5rem;
+  border-bottom: 1px solid #222;
+  background: #19191a;
 }
 
-.project-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
+.header-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.01em;
+  margin-bottom: 0.2em;
+  margin-top: 0.2em;
 }
 
 .project-actions {
@@ -154,24 +277,36 @@ const handleLayerUpdated = (layerId, data) => {
   gap: 1rem;
 }
 
+
 .editor-container {
   flex: 1;
-  display: grid;
-  grid-template-columns: 300px 1fr;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   height: calc(100vh - 80px);
+  background: #181818;
 }
 
-.tools-panel {
-  padding: 1rem;
-  border-right: 1px solid #ddd;
-  overflow-y: auto;
+.canvas-center-wrapper {
+  width: 100vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
 }
 
 .canvas-container {
+  background: #222;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  padding: 32px 32px 24px 32px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem;
+  min-width: 420px;
+  min-height: 600px;
+  max-width: 900px;
 }
 
 .canvas-area {
