@@ -38,13 +38,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useProjects } from '../composables/useProjects.js'
 import { authenticationService } from '../../iam/services/authentication.service.js'
 import cloudinaryService from '../services/cloudinary.service.js'
-import Button from 'primevue/button';
-import DesignCanvas from './DesignCanvas.vue';
+import designLabService from '../services/design-lab.service.js'
+import Button from 'primevue/button'
+import DesignCanvas from './DesignCanvas.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -55,17 +56,18 @@ const projectId = computed(() => route.params.id)
 // Use projects composable
 const {
   currentProject: project,
-  loading,
-  error,
   loadProject
 } = useProjects()
+
+// Local loading and error state
+const loading = ref(false)
+const error = ref('')
 
 // Computed garment style
 const garmentStyle = computed(() => {
   if (!project.value?.color) {
     return cloudinaryService.getDefaultGarmentStyle(500);
   }
-  
   return cloudinaryService.getGarmentColorStyle(project.value.color, 500);
 })
 
@@ -75,15 +77,10 @@ onMounted(async () => {
     router.push('/sign-in');
     return;
   }
-  
   if (projectId.value) {
     await loadProject(projectId.value);
   }
 })
-
-
-// Guardar cambios de layers (posición, z, etc) en el backend
-// (Solo una declaración de saveProject debe existir)
 
 const goBack = () => {
   router.push('/design-lab')
@@ -94,8 +91,6 @@ const retryLoad = () => {
     loadProject(projectId.value)
   }
 }
-
-
 
 // --- Layer State Management ---
 const selectedLayer = ref(null);
@@ -202,18 +197,48 @@ async function refreshLayers() {
 // Guardar cambios de layers (posición, z, etc) en el backend
 async function saveProject() {
   if (!project.value) return;
-  // Aquí deberías llamar a tu API para actualizar todas las capas del proyecto
-  // Ejemplo: await designLabService.updateLayers(project.value.id, editableLayers.value)
-  // Por ahora solo muestra feedback
   loading.value = true;
+  error.value = '';
   try {
-    // TODO: implementa la llamada real a la API
-    // await designLabService.updateLayers(project.value.id, editableLayers.value)
-    // Simulación de espera
-    await new Promise(res => setTimeout(res, 800));
+    // Guardar cada layer según su tipo
+    const promises = editableLayers.value.map(async layer => {
+      if (layer.type === 'Text') {
+        // 1. Update text details (only details fields)
+        const textDetails = { ...layer.details };
+        console.log('Text layer update payload:', textDetails);
+        await designLabService.updateTextLayerDetails(
+          project.value.id,
+          layer.id,
+          textDetails
+        );
+      } else if (layer.type === 'Image') {
+        // 1. Update image details (only details fields)
+        // Backend expects imageUrl, width, height (all as string)
+        const imageDetails = {
+          imageUrl: String(layer.details.imageUrl || ''),
+          width: String(layer.details.width || ''),
+          height: String(layer.details.height || '')
+        };
+        console.log('Image layer update payload:', imageDetails);
+        await designLabService.updateImageLayerDetails(
+          project.value.id,
+          layer.id,
+          imageDetails
+        );
+      }
+      // 2. Update coordinates for all layers
+      const coords = { x: layer.x, y: layer.y, z: layer.z };
+      console.log('Layer coordinates update payload:', coords);
+      await designLabService.updateLayerCoordinates(
+        project.value.id,
+        layer.id,
+        coords
+      );
+    });
+    await Promise.all(promises);
     await refreshLayers();
   } catch (e) {
-    // Manejo de error global
+    console.error('Save error:', e?.response?.data || e);
     error.value = 'Error al guardar los cambios.';
   } finally {
     loading.value = false;
