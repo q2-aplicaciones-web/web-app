@@ -52,6 +52,9 @@ export function useGarmentColors() {
    * @returns {Object} CSS style object
    */
   function getColorStyle(colorValue, size = 80) {
+    if (!colorValue) {
+      return cloudinaryService.getDefaultGarmentStyle(size);
+    }
     return cloudinaryService.getGarmentColorStyle(colorValue, size)
   }
 
