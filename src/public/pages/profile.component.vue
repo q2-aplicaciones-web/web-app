@@ -9,7 +9,7 @@ import Badge from 'primevue/badge';
 import Panel from 'primevue/panel';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
-import { authenticationService } from '../../iam/services/authentication.service.js';
+import { UserService } from '../../user_management/services/user.service';
 import { DesignLabService } from '../../design-lab/services/design-lab.service';
 
 const toast = useToast();
@@ -102,22 +102,13 @@ async function loadGenderOptions() {
   }
 }
 
-const userId = authenticationService.currentUserId.value || import.meta.env.VITE_DEFAULT_USER_ID;
+const userId = import.meta.env.VITE_DEFAULT_USER_ID;
 
 async function loadUserProfile() {
   loadingProfile.value = true;
   try {
-    // ✅ Mock user data - replace with actual API call when user service is available
-    const userEntity = {
-      id: userId,
-      username: authenticationService.currentUsername.value || 'User',
-      email: `${authenticationService.currentUsername.value || 'user'}@example.com`,
-      profile: {
-        firstName: 'John',
-        lastName: 'Doe',
-        gender: 'male'
-      }
-    };
+    // ✅ Cargar usuario real desde db.json
+    const userEntity = await UserService.getUserById(userId);
     currentUser.value = userEntity;
     
     // Llenar formulario con datos actuales
@@ -151,18 +142,12 @@ async function updateProfile() {
   try {
     console.log('Updating profile with data:', editForm.value);
     
-    // ✅ Mock profile update - replace with actual API call when user service is available
-    console.log('Mock profile update with data:', editForm.value);
-    
-    const updatedUserEntity = {
-      ...currentUser.value,
-      profile: {
-        ...currentUser.value.profile,
-        firstName: editForm.value.firstName,
-        lastName: editForm.value.lastName,
-        gender: editForm.value.gender
-      }
-    };
+    // ✅ ENVIAR datos al backend (db.json)
+    const updatedUserEntity = await UserService.updateUserProfile(userId, {
+      firstName: editForm.value.firstName,
+      lastName: editForm.value.lastName,
+      gender: editForm.value.gender
+    });
     
     // Actualizar datos locales
     currentUser.value = updatedUserEntity;
