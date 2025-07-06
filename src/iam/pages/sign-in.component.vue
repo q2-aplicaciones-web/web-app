@@ -21,7 +21,7 @@
                 :disabled="isLoading"
                 required
                 style="width:100%"
-                inputStyle="width:100%"
+                :inputStyle="{ width: '100%' }"
                 :inputProps="{ type: 'text' }"
               />
               <small v-if="errors.username" class="p-error">{{ t('signin.validation.required', { field: t('signin.username') }) }}</small>
@@ -39,7 +39,7 @@
                 :disabled="isLoading"
                 required
                 style="width:100%"
-                inputStyle="width:100%"
+                :inputStyle="{ width: '100%' }"
               />
               <small v-if="errors.password" class="p-error">{{ t('signin.validation.required', { field: t('signin.password') }) }}</small>
             </div>
