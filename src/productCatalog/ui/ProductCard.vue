@@ -26,20 +26,22 @@
     </template>
     <template #footer>
       <div class="card-footer-btns">
-        <Button label="View Details" icon="pi pi-eye" @click="$emit('view', product)" text/>
-        <Button label="Add to Cart" icon="pi pi-shopping-cart" severity="primary" @click="$emit('add-to-cart', product)" />
+        <Button :label="$t('catalog.viewDetails')" icon="pi pi-eye" @click="$emit('view', product)" text/>
+        <Button :label="$t('catalog.addToCart')" icon="pi pi-shopping-cart" severity="primary" @click="$emit('add-to-cart', product)" />
       </div>
-      <Button label="Buy Now" class="buy-now-btn" text />
+      <Button :label="$t('catalog.buyNow')" class="buy-now-btn dark" text />
     </template>
   </Card>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import productLikesService from '../application/productLikesService';
 
+const { t } = useI18n();
 const props = defineProps({ product: Object, userId: String });
 const likeCount = ref(props.product.likeCount || 0);
 const liked = ref(false);
@@ -177,5 +179,11 @@ async function toggleLike() {
   color: #1976d2;
   font-weight: 600;
   border-radius: 8px;
+}
+.buy-now-btn.dark {
+  background: #23272f !important;
+  color: #fff !important;
+  border-radius: 8px;
+  font-weight: 600;
 }
 </style>
