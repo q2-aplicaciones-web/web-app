@@ -7,7 +7,10 @@ export function useManufacturerOrders() {
 
   async function getManufacturerOrders() {
     // 1. Obtener el usuario de sesión
-    const userId = authenticationService.currentUserId.value || import.meta.env.VITE_DEFAULT_USER_ID;
+    const userId = authenticationService.currentUserId.value;
+    if (!userId) {
+      throw new Error('User must be authenticated to access manufacturer orders');
+    }
     // 2. Buscar manufacturer por user_id
     const res = await fetch(`${env.apiBaseUrl}/manufacturers?user_id=${userId}`);
     const manufacturers = await res.json();

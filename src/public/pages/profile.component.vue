@@ -10,7 +10,7 @@ import Panel from 'primevue/panel';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 import { authenticationService } from '../../iam/services/authentication.service.js';
-import { DesignLabService } from '../../design-lab/services/design-lab.service';
+import designLabService from '../../design-lab/services/design-lab.service.js';
 
 const toast = useToast();
 
@@ -84,9 +84,14 @@ onMounted(async () => {
 async function loadGenderOptions() {
   loadingGenders.value = true;
   try {
-    const genders = await DesignLabService.getGenders();
-    genderOptions.value = genders;
-    console.log('Loaded gender options:', genders);
+    // Use hardcoded gender options since no API endpoint exists
+    genderOptions.value = [
+      { label: 'Male', value: 'male' },
+      { label: 'Female', value: 'female' },
+      { label: 'Other', value: 'other' },
+      { label: 'Prefer not to say', value: 'not_specified' }
+    ];
+    console.log('Loaded gender options:', genderOptions.value);
   } catch (error) {
     console.error('Failed to load gender options:', error);
     // Set empty array and show toast error instead of hardcoded fallback
@@ -102,7 +107,7 @@ async function loadGenderOptions() {
   }
 }
 
-const userId = authenticationService.currentUserId.value || import.meta.env.VITE_DEFAULT_USER_ID;
+const userId = authenticationService.currentUserId.value;
 
 async function loadUserProfile() {
   loadingProfile.value = true;

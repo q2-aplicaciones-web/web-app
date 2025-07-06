@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeComponent from "../public/pages/home.component.vue";
-import CreateProjectComponent from "../design-lab/components/create-project.component.vue";
+import CreateProjectComponent from "../design-lab/components/CreateProject.vue";
 import DashboardComponent from "../public/pages/dashboard.component.vue";
 import ShoppingCartComponent from "../public/pages/shopping-cart.component.vue";
 import { authenticationGuard, guestGuard } from "../iam/services/authentication.guard.js";
@@ -11,7 +11,7 @@ import { env } from "../env";
 const DesignLabComponent = () =>
     import("../public/pages/design-lab.component.vue");
 const ProjectDetailComponent = () =>
-    import("../design-lab/components/project-detail.component.vue");
+    import("../design-lab/components/ProjectDetail.vue");
 const ProfileComponent = () =>
     import("../public/pages/profile.component.vue");
 const ExplorePageComponent = () =>
@@ -106,7 +106,7 @@ const routes = [
         meta: { 
             title: "Order Management"
         },
-        beforeEnter: authenticationGuard  // Note: All users can access, but functionality may be limited
+        beforeEnter: authenticationGuard
     },
     
     // 🔄 Default redirects

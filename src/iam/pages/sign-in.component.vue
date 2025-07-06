@@ -1,90 +1,68 @@
 <template>
   <div class="signin-container">
-    <div class="signin-card">
-      <!-- Header -->
-      <div class="signin-header">
-        <h1 class="signin-title">Welcome to Q2</h1>
-        <p class="signin-subtitle">Sign in to your account</p>
-      </div>
-
-      <!-- Sign In Form -->
-      <form @submit.prevent="handleSignIn" class="signin-form">
-        <!-- Username Field -->
-        <div class="form-field">
-          <label for="username" class="form-label">Username</label>
-          <div class="input-container">
-            <input
-              id="username"
-              v-model="formData.username"
-              type="text"
-              class="form-input"
-              :class="{ 'error': errors.username }"
-              placeholder="Enter your username"
-              autocomplete="username"
-              :disabled="isLoading"
-              required
+    <Card class="signin-card" contentClass="signin-card-content">
+      <template #content>
+        <div class="signin-header">
+          <h1 class="signin-title">Welcome to Q2</h1>
+          <p class="signin-subtitle">Sign in to your account</p>
+        </div>
+        <form @submit.prevent="handleSignIn" class="signin-form">
+          <div class="p-fluid">
+            <div class="p-field" style="margin-bottom: 1.5rem;">
+              <label for="username">Username</label>
+              <Password
+                id="username"
+                v-model="formData.username"
+                :feedback="false"
+                :toggleMask="false"
+                :class="{ 'p-invalid': errors.username }"
+                placeholder="Enter your username"
+                autocomplete="username"
+                :disabled="isLoading"
+                required
+                style="width:100%"
+                inputStyle="width:100%"
+                :inputProps="{ type: 'text' }"
+              />
+              <small v-if="errors.username" class="p-error">Username is required</small>
+            </div>
+            <div class="p-field" style="margin-bottom: 1.5rem;">
+              <label for="password">Password</label>
+              <Password
+                id="password"
+                v-model="formData.password"
+                :feedback="false"
+                :toggleMask="true"
+                :class="{ 'p-invalid': errors.password }"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                :disabled="isLoading"
+                required
+                style="width:100%"
+                inputStyle="width:100%"
+              />
+              <small v-if="errors.password" class="p-error">Password is required</small>
+            </div>
+            <Message v-if="errorMessage" severity="error">Sign in failed. Please try again.</Message>
+            <Message v-if="successMessage" severity="success">Welcome back! Signing you in...</Message>
+            <Button
+              type="submit"
+              :label="isLoading ? 'Signing In...' : 'Sign In'"
+              :loading="isLoading"
+              :disabled="isLoading || !isFormValid"
+              icon="pi pi-sign-in"
+              class="w-full mt-3"
             />
           </div>
-          <div v-if="errors.username" class="error-message">Username is required</div>
+        </form>
+        <div class="signin-footer mt-4" style="text-align:center;">
+          <span>
+            Don't have an account?
+            <router-link to="/sign-up" class="signup-link">Sign up here</router-link>
+          </span>
         </div>
-
-        <!-- Password Field -->
-        <div class="form-field">
-          <label for="password" class="form-label">Password</label>
-          <div class="input-container">
-            <input
-              id="password"
-              v-model="formData.password"
-              :type="showPassword ? 'text' : 'password'"
-              class="form-input"
-              :class="{ 'error': errors.password }"
-              placeholder="Enter your password"
-              autocomplete="current-password"
-              :disabled="isLoading"
-              required
-            />
-            <button
-              type="button"
-              @click="togglePasswordVisibility"
-              class="password-toggle"
-              :disabled="isLoading"
-              aria-label="Toggle password visibility"
-            >
-              Show
-            </button>
-          </div>
-          <div v-if="errors.password" class="error-message">Password is required</div>
-        </div>
-
-        <!-- Error Message -->
-        <div v-if="errorMessage" class="alert alert-error">
-          Sign in failed. Please try again.
-        </div>
-
-        <!-- Success Message -->
-        <div v-if="successMessage" class="alert alert-success">
-          Welcome back! Signing you in...
-        </div>
-
-        <!-- Submit Button -->
-        <button
-          type="submit"
-          class="signin-button"
-          :disabled="isLoading || !isFormValid"
-        >
-          <span v-if="isLoading" class="loading-spinner">Signing In...</span>
-          <span v-else>Sign In</span>
-        </button>
-      </form>
-
-      <!-- Footer -->
-      <div class="signin-footer">
-        <p class="signup-prompt">
-          Don't have an account?
-          <router-link to="/sign-up" class="signup-link">Sign up here</router-link>
-        </p>
-      </div>
-    </div>
+      </template>
+    </Card>
   </div>
 </template>
 
@@ -93,6 +71,11 @@ import { ref, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { authenticationService } from '../services/authentication.service.js';
 import { SignInRequest } from '../model/sign-in.request.js';
+import InputText from 'primevue/inputtext';
+import Password from 'primevue/password';
+import Button from 'primevue/button';
+import Message from 'primevue/message';
+import Card from 'primevue/card';
 
 // Router composables
 const router = useRouter();
@@ -110,7 +93,6 @@ const errors = ref({
 });
 
 const isLoading = ref(false);
-const showPassword = ref(false);
 const errorMessage = ref('');
 const successMessage = ref('');
 
@@ -141,10 +123,6 @@ const validateForm = () => {
   }
 
   return Object.keys(errors.value).length === 0;
-};
-
-const togglePasswordVisibility = () => {
-  showPassword.value = !showPassword.value;
 };
 
 const handleSignIn = async () => {
@@ -214,170 +192,42 @@ if (authenticationService.isSignedIn.value) {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
 }
 
 .signin-card {
-  background: rgb(39, 39, 39);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 400px;
-  overflow: hidden;
+  max-width: 420px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  border: none;
+}
+
+.signin-card-content {
+  padding: 2.5rem 2rem 2rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .signin-header {
-  padding: 30px 30px 20px;
-  text-align: center;
-  background: rgb(39, 39, 39);
+  margin-bottom: 2rem;
 }
 
 .signin-title {
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0 0 8px;
-  color: #ffffff;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.5rem;
 }
 
 .signin-subtitle {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
+  font-size: 1.1rem;
+  color: #b0b0b0;
 }
 
 .signin-form {
-  padding: 30px;
-}
-
-.form-field {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  font-weight: 500;
-  color: #ffffff;
-  font-size: 14px;
-  margin-bottom: 6px;
-}
-
-.input-container {
-  position: relative;
-}
-
-.form-input {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 16px;
-  transition: border-color 0.2s ease;
-  box-sizing: border-box;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.form-input.error {
-  border-color: #dc3545;
-}
-
-.form-input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.password-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  color: #666;
-  padding: 4px;
-}
-
-.password-toggle:hover:not(:disabled) {
-  color: #007bff;
-}
-
-.password-toggle:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.error-message {
-  color: #dc3545;
-  font-size: 13px;
-  margin-top: 4px;
-}
-
-.alert {
-  padding: 12px 16px;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-.alert-error {
-  background: rgb(39, 39, 39);
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.alert-success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.signin-button {
-  width: 100%;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.signin-button:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-.signin-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.loading-spinner {
-  display: inline-block;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.signin-footer {
-  padding: 20px 30px 30px;
-  text-align: center;
-  background: rgb(39, 39, 39);
-}
-
-.signup-prompt {
-  color: #666;
-  font-size: 14px;
-  margin: 0;
+  margin: 0 auto;
 }
 
 .signup-link {
@@ -388,28 +238,5 @@ if (authenticationService.isSignedIn.value) {
 
 .signup-link:hover {
   text-decoration: underline;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 480px) {
-  .signin-container {
-    padding: 16px;
-  }
-  
-  .signin-header {
-    padding: 24px 20px 16px;
-  }
-  
-  .signin-form {
-    padding: 24px 20px;
-  }
-  
-  .signin-footer {
-    padding: 16px 20px 24px;
-  }
-  
-  .signin-title {
-    font-size: 20px;
-  }
 }
 </style>
