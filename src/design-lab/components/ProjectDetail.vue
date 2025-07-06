@@ -23,8 +23,9 @@
           <div v-else-if="project" class="canvas-area">
             <!-- Garment Display replaced with DesignCanvas -->
             <DesignCanvas
-              :projectId="project?.id"
+              :projectId="project.id"
               :layers="layers"
+              :projectColor="project.color"
               :selectedLayer="selectedLayer"
               @layer-selected="handleLayerSelected"
               @layer-moved="handleLayerMoved"

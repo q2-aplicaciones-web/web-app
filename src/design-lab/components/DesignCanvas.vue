@@ -62,7 +62,8 @@ export default {
   components: { Button, FileUpload, InputText, ColorPicker, Dropdown, InputNumber, ContextMenu },
   props: {
     projectId: { type: String, required: true },
-    layers: { type: Array, required: true }
+    layers: { type: Array, required: true },
+    projectColor: { type: String, required: true }
   },
   data() {
     return {
@@ -84,7 +85,6 @@ export default {
         { name: 'Yellow', hex: '#FECD08' },
         { name: 'DarkYellow', hex: '#F2AB00' }
       ],
-      selectedColor: 'White',
       textInput: '',
       fontColor: '#000000',
       fontFamily: 'Arial',
@@ -126,8 +126,11 @@ export default {
     window.removeEventListener('mouseup', this.stopDrag);
   },
   computed: {
+    currentColor() {
+      return this.projectColor;
+    },
     selectedColorHex() {
-      const color = this.garmentColors.find(c => c.name === this.selectedColor);
+      const color = this.garmentColors.find(c => c.name === this.currentColor);
       return color ? color.hex : '#EDEDED';
     },
     canvasSpriteStyle() {
@@ -141,7 +144,7 @@ export default {
         'LightBlue', 'Cyan', 'SkyBlue', 'Blue',
         'Green', 'LightGreen', 'Yellow', 'DarkYellow'
       ];
-      const idx = colorOrder.indexOf(this.selectedColor);
+      const idx = colorOrder.indexOf(this.currentColor);
       const row = Math.floor(idx / gridCols);
       const col = idx % gridCols;
       const x = -(col * segmentWidth);
@@ -162,9 +165,6 @@ export default {
     }
   },
   methods: {
-    selectColor(color) {
-      this.selectedColor = color;
-    },
     imageStyle(layer) {
       return {
         maxWidth: '200px',
