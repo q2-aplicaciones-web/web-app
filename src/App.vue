@@ -135,32 +135,35 @@ watch(route, (newRoute) => {
   }
 }, { immediate: true });
 
-// Create a function to build menu items based on current role
+// i18n setup
+const { locale, t } = useI18n();
+
+// Create a function to build menu items based on role (moved after t is defined)
 function buildMenuItems() {
   const baseItems = [
     {
-        label: "Home",
+        label: t('navigation.home'),
         icon: "pi pi-home",
         command: () => {
             router.push("/home");
         },
     },
     {
-        label: "Dashboard",
+        label: t('navigation.dashboard'),
         icon: "pi pi-chart-bar",
         command: () => {
             router.push("/dashboard");
         },
     },
     {
-        label: "Explore",
+        label: t('navigation.explore'),
         icon: "pi pi-compass",
         command: () => {
             router.push("/explore");
         },
     },
     {
-        label: "Design Lab",
+        label: t('navigation.designLab'),
         icon: "pi pi-cog",
         command: () => {
             router.push("/design-lab");
@@ -171,7 +174,7 @@ function buildMenuItems() {
   // Add manufacturer-specific menu items
   if (isManufacturer.value) {
     baseItems.push({
-      label: "Order Management",
+      label: t('navigation.order_management'),
       icon: "pi pi-list",
       command: () => {
           router.push("/manufacturer-orders");
@@ -182,7 +185,7 @@ function buildMenuItems() {
   // Add settings if user is authenticated
   if (isSignedIn.value) {
     baseItems.push({
-      label: "Settings",
+      label: t('navigation.settings'),
       icon: "pi pi-cog",
       command: () => {
         router.push("/settings");
@@ -195,7 +198,7 @@ function buildMenuItems() {
     baseItems.push(
       { separator: true },
       {
-        label: "Sign Out",
+        label: t('navigation.sign_out'),
         icon: "pi pi-sign-out",
         command: () => {
           if (confirm('Are you sure you want to sign out?')) {
@@ -221,12 +224,14 @@ onMounted(() => {
   });
 });
 
-// i18n setup
-const { locale, t } = useI18n();
-
 function toggleLanguage() {
   locale.value = locale.value === 'en' ? 'es' : 'en';
 }
+
+// Watch for language changes to update menu labels
+watch(locale, () => {
+  menuItems.value = buildMenuItems();
+});
 </script>
 
 <template>

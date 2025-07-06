@@ -3,26 +3,26 @@
     <Card class="signup-card" contentClass="signup-card-content">
       <template #content>
         <div class="signup-header">
-          <h1 class="signup-title">Create Account</h1>
-          <p class="signup-subtitle">Join Q2</p>
+          <h1 class="signup-title">{{ t('signup.title') }}</h1>
+          <p class="signup-subtitle">{{ t('signup.subtitle') }}</p>
         </div>
         <form @submit.prevent="handleSignUp" class="signup-form">
           <div class="p-fluid">
             <div class="p-field" style="margin-bottom: 1.5rem;">
-              <label for="username">Username</label>
+              <label for="username">{{ t('signup.usernameField.label') }}</label>
               <InputText
                 id="username"
                 v-model="formData.username"
                 :class="{ 'p-invalid': errors.username }"
-                placeholder="Choose a username"
+                :placeholder="t('signup.usernameField.placeholder')"
                 autocomplete="username"
                 :disabled="isLoading"
                 required
               />
-              <small v-if="errors.username" class="p-error">Username is required</small>
+              <small v-if="errors.username" class="p-error">{{ t('signup.validation.required', { field: t('signup.username') }) }}</small>
             </div>
             <div class="p-field" style="margin-bottom: 1.5rem;">
-              <label for="password">Password</label>
+              <label for="password">{{ t('signup.passwordField.label') }}</label>
               <Password
                 id="password"
                 v-model="formData.password"
@@ -30,15 +30,15 @@
                 :toggleMask="true"
                 :inputStyle="{ width: '100%' }"
                 :class="{ 'p-invalid': errors.password }"
-                placeholder="Create a password"
+                :placeholder="t('signup.passwordField.placeholder')"
                 autocomplete="new-password"
                 :disabled="isLoading"
                 required
               />
-              <small v-if="errors.password" class="p-error">Password is required</small>
+              <small v-if="errors.password" class="p-error">{{ t('signup.validation.required', { field: t('signup.password') }) }}</small>
             </div>
             <div class="p-field" style="margin-bottom: 1.5rem;">
-              <label for="confirmPassword">Confirm Password</label>
+              <label for="confirmPassword">{{ t('signup.confirmPasswordField.label') }}</label>
               <Password
                 id="confirmPassword"
                 v-model="formData.confirmPassword"
@@ -46,18 +46,18 @@
                 :toggleMask="true"
                 :inputStyle="{ width: '100%' }"
                 :class="{ 'p-invalid': errors.confirmPassword }"
-                placeholder="Confirm your password"
+                :placeholder="t('signup.confirmPasswordField.placeholder')"
                 autocomplete="new-password"
                 :disabled="isLoading"
                 required
               />
-              <small v-if="errors.confirmPassword" class="p-error">Passwords do not match</small>
+              <small v-if="errors.confirmPassword" class="p-error">{{ t('signup.validation.passwordMismatch') }}</small>
             </div>
-            <Message v-if="errorMessage" severity="error">Registration failed. Please try again.</Message>
-            <Message v-if="successMessage" severity="success">Account created successfully!</Message>
+            <Message v-if="errorMessage" severity="error">{{ t('common.error') }}</Message>
+            <Message v-if="successMessage" severity="success">{{ t('common.loading') }}</Message>
             <Button
               type="submit"
-              :label="isLoading ? 'Creating Account...' : 'Create Account'"
+              :label="t('signup.button.creating')"
               :loading="isLoading"
               :disabled="isLoading || !isFormValid"
               icon="pi pi-user-plus"
@@ -67,8 +67,8 @@
         </form>
         <div class="signup-footer mt-4" style="text-align:center;">
           <span>
-            Already have an account?
-            <router-link to="/sign-in" class="signin-link">Sign in here</router-link>
+            {{ t('signup.alreadyHaveAccount') }}
+            <router-link to="/sign-in" class="signin-link">{{ t('common.signIn') }}</router-link>
           </span>
         </div>
       </template>
@@ -86,9 +86,11 @@ import Password from 'primevue/password';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import Card from 'primevue/card';
+import { useI18n } from 'vue-i18n';
 
 // Router composable
 const router = useRouter();
+const { t } = useI18n();
 
 // Reactive data
 const formData = ref({

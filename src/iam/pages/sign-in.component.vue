@@ -3,20 +3,20 @@
     <Card class="signin-card" contentClass="signin-card-content">
       <template #content>
         <div class="signin-header">
-          <h1 class="signin-title">Welcome to Q2</h1>
-          <p class="signin-subtitle">Sign in to your account</p>
+          <h1 class="signin-title">{{ t('signin.title') }}</h1>
+          <p class="signin-subtitle">{{ t('signin.subtitle') }}</p>
         </div>
         <form @submit.prevent="handleSignIn" class="signin-form">
           <div class="p-fluid">
             <div class="p-field" style="margin-bottom: 1.5rem;">
-              <label for="username">Username</label>
+              <label for="username">{{ t('signin.usernameField.label') }}</label>
               <Password
                 id="username"
                 v-model="formData.username"
                 :feedback="false"
                 :toggleMask="false"
                 :class="{ 'p-invalid': errors.username }"
-                placeholder="Enter your username"
+                :placeholder="t('signin.usernameField.placeholder')"
                 autocomplete="username"
                 :disabled="isLoading"
                 required
@@ -24,30 +24,30 @@
                 inputStyle="width:100%"
                 :inputProps="{ type: 'text' }"
               />
-              <small v-if="errors.username" class="p-error">Username is required</small>
+              <small v-if="errors.username" class="p-error">{{ t('signin.validation.required', { field: t('signin.username') }) }}</small>
             </div>
             <div class="p-field" style="margin-bottom: 1.5rem;">
-              <label for="password">Password</label>
+              <label for="password">{{ t('signin.passwordField.label') }}</label>
               <Password
                 id="password"
                 v-model="formData.password"
                 :feedback="false"
                 :toggleMask="true"
                 :class="{ 'p-invalid': errors.password }"
-                placeholder="Enter your password"
+                :placeholder="t('signin.passwordField.placeholder')"
                 autocomplete="current-password"
                 :disabled="isLoading"
                 required
                 style="width:100%"
                 inputStyle="width:100%"
               />
-              <small v-if="errors.password" class="p-error">Password is required</small>
+              <small v-if="errors.password" class="p-error">{{ t('signin.validation.required', { field: t('signin.password') }) }}</small>
             </div>
-            <Message v-if="errorMessage" severity="error">Sign in failed. Please try again.</Message>
-            <Message v-if="successMessage" severity="success">Welcome back! Signing you in...</Message>
+            <Message v-if="errorMessage" severity="error">{{ t('common.error') }}</Message>
+            <Message v-if="successMessage" severity="success">{{ t('common.loading') }}</Message>
             <Button
               type="submit"
-              :label="isLoading ? 'Signing In...' : 'Sign In'"
+              :label="t('signin.button.signingIn')"
               :loading="isLoading"
               :disabled="isLoading || !isFormValid"
               icon="pi pi-sign-in"
@@ -57,8 +57,8 @@
         </form>
         <div class="signin-footer mt-4" style="text-align:center;">
           <span>
-            Don't have an account?
-            <router-link to="/sign-up" class="signup-link">Sign up here</router-link>
+            {{ t('signin.noAccount') }}
+            <router-link to="/sign-up" class="signup-link">{{ t('common.signUp') }}</router-link>
           </span>
         </div>
       </template>
@@ -76,6 +76,7 @@ import Password from 'primevue/password';
 import Button from 'primevue/button';
 import Message from 'primevue/message';
 import Card from 'primevue/card';
+import { useI18n } from 'vue-i18n';
 
 // Router composables
 const router = useRouter();
@@ -184,6 +185,9 @@ watch(formData, () => {
 if (authenticationService.isSignedIn.value) {
   router.push('/home');
 }
+
+// i18n
+const { t } = useI18n();
 </script>
 
 <style scoped>
