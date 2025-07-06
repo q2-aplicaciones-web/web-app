@@ -18,6 +18,7 @@ class DesignLabApiService {
         // Add request interceptor for authentication
         this.axiosInstance.interceptors.request.use(
             (config) => {
+                // Only declare 'token' once in this scope
                 const token = this.getAuthToken();
                 if (token) {
                     config.headers.Authorization = `Bearer ${token}`;
@@ -296,6 +297,27 @@ class DesignLabApiService {
             const response = await this.axiosInstance.put(
                 `/api/v1/projects/${projectId}/layers/${layerId}/image-details`, 
                 imageDetails
+            );
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    /**
+     * PUT /api/v1/projects/{projectId}/layers/{layerId}/coordinates
+     * Update Layer Coordinates
+     *
+     * @param {string} projectId - Project UUID
+     * @param {string} layerId - Layer UUID
+     * @param {Object} coords - Coordinates { x, y, z }
+     * @returns {Promise<Object>} Updated layer
+     */
+    async updateLayerCoordinates(projectId, layerId, coords) {
+        try {
+            const response = await this.axiosInstance.put(
+                `/api/v1/projects/${projectId}/layers/${layerId}/coordinates`,
+                coords
             );
             return response.data;
         } catch (error) {
