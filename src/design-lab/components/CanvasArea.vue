@@ -1,75 +1,73 @@
 <!-- DesignCanvas.vue - Main design canvas with layer rendering and interaction -->
 <template>
   <div class="canvas-area">
-    <!-- Canvas Container -->
-    <div class="canvas-container" ref="canvasContainer">
-      <!-- Garment Background -->
-      <div 
-        class="garment-background"
-        :style="garmentStyle"
-        @click="handleCanvasClick"
+    <!-- Garment Background (single canvas container) -->
+    <div 
+      class="garment-background"
+      :style="garmentStyle"
+      ref="canvasContainer"
+      @click="handleCanvasClick"
+    >
+      <!-- Layer Rendering -->
+      <div
+        v-for="layer in visibleLayers"
+        :key="layer.id"
+        class="canvas-layer"
+        :class="{ 
+          'selected': isLayerSelected(layer),
+          'dragging': draggingLayer?.id === layer.id
+        }"
+        :style="getLayerStyle(layer)"
+        @click.stop="selectLayer(layer)"
+        @mousedown="startDrag(layer, $event)"
       >
-        <!-- Layer Rendering -->
+        <!-- Text Layer -->
         <div
-          v-for="layer in visibleLayers"
-          :key="layer.id"
-          class="canvas-layer"
-          :class="{ 
-            'selected': isLayerSelected(layer),
-            'dragging': draggingLayer?.id === layer.id
-          }"
-          :style="getLayerStyle(layer)"
-          @click.stop="selectLayer(layer)"
-          @mousedown="startDrag(layer, $event)"
+          v-if="layer.type === 'text'"
+          class="text-layer"
+          :style="getTextStyle(layer)"
         >
-          <!-- Text Layer -->
-          <div
-            v-if="layer.type === 'text'"
-            class="text-layer"
-            :style="getTextStyle(layer)"
-          >
-            {{ layer.text || 'Text Layer' }}
-          </div>
+          {{ layer.text || 'Text Layer' }}
+        </div>
 
-          <!-- Image Layer -->
-          <div
-            v-else-if="layer.type === 'image'"
-            class="image-layer"
-          >
-            <img
-              v-if="layer.imageUrl"
-              :src="layer.imageUrl"
-              :alt="layer.name || 'Image layer'"
-              :style="getImageStyle(layer)"
-              draggable="false"
-            />
-            <div v-else class="image-placeholder">
-              🖼 No Image
-            </div>
-          </div>
-
-          <!-- Selection Handles -->
-          <div v-if="isLayerSelected(layer)" class="selection-handles">
-            <div class="handle handle-nw" @mousedown.stop="startResize(layer, 'nw', $event)"></div>
-            <div class="handle handle-ne" @mousedown.stop="startResize(layer, 'ne', $event)"></div>
-            <div class="handle handle-sw" @mousedown.stop="startResize(layer, 'sw', $event)"></div>
-            <div class="handle handle-se" @mousedown.stop="startResize(layer, 'se', $event)"></div>
+        <!-- Image Layer -->
+        <div
+          v-else-if="layer.type === 'image'"
+          class="image-layer"
+        >
+          <img
+            v-if="layer.imageUrl"
+            :src="layer.imageUrl"
+            :alt="layer.name || 'Image layer'"
+            :style="getImageStyle(layer)"
+            draggable="false"
+          />
+          <div v-else class="image-placeholder">
+            🖼 No Image
           </div>
         </div>
 
-        <!-- Canvas Info Overlay -->
-        <div v-if="layers.length === 0" class="canvas-empty">
-          <div class="empty-message">
-            <h4>Design Canvas</h4>
-            <p>Add text or image layers to start designing</p>
-            <div class="garment-info">
-              <span>Garment Color: {{ getCurrentColorName() }}</span>
-            </div>
+        <!-- Selection Handles -->
+        <div v-if="isLayerSelected(layer)" class="selection-handles">
+          <div class="handle handle-nw" @mousedown.stop="startResize(layer, 'nw', $event)"></div>
+          <div class="handle handle-ne" @mousedown.stop="startResize(layer, 'ne', $event)"></div>
+          <div class="handle handle-sw" @mousedown.stop="startResize(layer, 'sw', $event)"></div>
+          <div class="handle handle-se" @mousedown.stop="startResize(layer, 'se', $event)"></div>
+        </div>
+      </div>
+
+      <!-- Canvas Info Overlay -->
+      <div v-if="layers.length === 0" class="canvas-empty">
+        <div class="empty-message">
+          <h4>Design Canvas</h4>
+          <p>Add text or image layers to start designing</p>
+          <div class="garment-info">
+            <span>Garment Color: {{ getCurrentColorName() }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Canvas Controls -->
+      <!-- Canvas Controls (moved inside garment-background for single canvas) -->
       <div class="canvas-controls">
         <div class="zoom-controls">
           <button @click="zoomOut" class="btn btn-icon" title="Zoom Out">-</button>
@@ -77,7 +75,6 @@
           <button @click="zoomIn" class="btn btn-icon" title="Zoom In">+</button>
           <button @click="resetZoom" class="btn btn-small" title="Reset Zoom">Reset</button>
         </div>
-        
         <div class="canvas-info">
           <span>{{ layers.length }} layer{{ layers.length !== 1 ? 's' : '' }}</span>
           <span v-if="selectedLayer">• Selected: {{ getLayerDisplayName(selectedLayer) }}</span>
@@ -412,10 +409,10 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.canvas-container {
+.garment-background {
   flex: 1;
   position: relative;
-  overflow: auto;
+  overflow: visible;
   background-image: 
     linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
     linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
@@ -423,13 +420,6 @@ onUnmounted(() => {
     linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-}
-
-.garment-background {
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  overflow: visible;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .canvas-layer {

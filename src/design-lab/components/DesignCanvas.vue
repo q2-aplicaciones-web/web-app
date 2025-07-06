@@ -1,9 +1,70 @@
+<template>
+  <div class="design-canvas prime-adapted center-content">
+    <div class="canvas-area" :style="canvasSpriteStyle" @click.self="selectedLayerId = null">
+      <div
+        v-for="layer in layers"
+        :key="layer.id"
+        class="layer"
+        :style="layer.type === 'Image' ? { left: layer.x + 'px', top: layer.y + 'px', width: layer.details.width + 'px', height: layer.details.height + 'px', zIndex: layer.z || 1 } : textStyle(layer)"
+        @mousedown="startDrag($event, layer)"
+        @click.stop="selectedLayerId = layer.id"
+        @contextmenu.prevent="showLayerMenu($event, layer)"
+      >
+        <div v-if="selectedLayerId === layer.id" class="selection-border"></div>
+        <img v-if="layer.type === 'Image'" :src="layer.details.imageUrl" draggable="false" style="width: 100%; height: 100%; display: block;" />
+        <template v-if="layer.type === 'Image' && selectedLayerId === layer.id">
+          <div v-for="pos in ['tl','tr','bl','br']" :key="pos" :class="['corner-handle', pos]" @mousedown.stop="startResize($event, layer, pos)"></div>
+        </template>
+        <div v-else-if="layer.type === 'Text'"
+          :style="{ width: layer.details.width ? layer.details.width + 'px' : 'auto', height: layer.details.height ? layer.details.height + 'px' : 'auto', resize: 'both', overflow: 'auto', minWidth: '40px', minHeight: '24px', display: 'inline-block' }"
+          @mousedown.stop="startDrag($event, layer)">{{ layer.details.text }}</div>
+      </div>
+    </div>
+
+    <!-- Upload Button Section -->
+    <div class="upload-section-sep">
+      <div class="prime-row minimal-row">
+        <FileUpload mode="basic" name="file" accept="image/*" :auto="true" chooseIcon="pi pi-upload" chooseLabel="Upload Image" class="minimal-btn fileupload-full-width" :disabled="uploading" @select="onPrimeFileUpload" :customUpload="true" @uploader="onPrimeFileUpload" />
+        <span v-if="uploading" class="upload-loader"><i class="pi pi-spin pi-spinner"></i></span>
+        <span v-if="uploadSuccess" class="upload-success"><i class="pi pi-check"></i></span>
+        <span v-if="uploadError" class="upload-error"><i class="pi pi-exclamation-triangle"></i></span>
+      </div>
+    </div>
+
+    <!-- Text Options Section -->
+    <div class="text-options-sep">
+      <div class="prime-row minimal-row">
+        <InputText v-model="textInput" placeholder="Texto" class="minimal-input" style="flex: 1;" />
+      </div>
+      <div class="prime-row minimal-row" >
+        <Dropdown v-model="fontFamily" :options="fontOptions" class="minimal-input" optionLabel="label" optionValue="value" />
+        <InputNumber v-model="fontSize" :min="10" :max="100" class="minimal-input" style="width:auto; margin-right: 8px;" />
+        <ColorPicker v-model="fontColor" class="minimal-input" />
+        <Button icon="pi pi-plus" class="prime-btn minimal-btn" @click="addTextLayer" />
+      </div>
+    </div>
+
+    <!-- Add PrimeVue ContextMenu component -->
+    <ContextMenu ref="layerMenu" :model="layerMenuItems" />
+  </div>
+</template>
+
 <script>
+import Button from 'primevue/button';
+import FileUpload from 'primevue/fileupload';
+import InputText from 'primevue/inputtext';
+import ColorPicker from 'primevue/colorpicker';
+import Dropdown from 'primevue/dropdown';
+import InputNumber from 'primevue/inputnumber';
+import ContextMenu from 'primevue/contextmenu';
+import designLabService from '../services/design-lab.service.js';
 export default {
   name: 'DesignCanvas',
+  components: { Button, FileUpload, InputText, ColorPicker, Dropdown, InputNumber, ContextMenu },
   props: {
     projectId: { type: String, required: true },
-    layers: { type: Array, required: true }
+    layers: { type: Array, required: true },
+    projectColor: { type: String, required: true }
   },
   data() {
     return {
@@ -25,7 +86,6 @@ export default {
         { name: 'Yellow', hex: '#FECD08' },
         { name: 'DarkYellow', hex: '#F2AB00' }
       ],
-      selectedColor: 'White',
       textInput: '',
       fontColor: '#000000',
       fontFamily: 'Arial',
@@ -39,7 +99,23 @@ export default {
       dragOffset: { x: 0, y: 0 },
       resizing: false,
       resizeLayer: null,
-      resizeStart: { x: 0, y: 0, width: 0, height: 0 }
+      resizeStart: { x: 0, y: 0, width: 0, height: 0 },
+      selectedLayerId: null,
+      contextLayer: null,
+      layerMenuItems: [
+        {
+          label: 'Delete',
+          icon: 'pi pi-trash',
+          command: () => {
+            if (this.contextLayer) this.deleteLayer(this.contextLayer.id);
+          }
+        }
+      ],
+      fontOptions: [
+        { label: 'Arial', value: 'Arial' },
+        { label: 'Verdana', value: 'Verdana' },
+        { label: 'Times New Roman', value: 'Times New Roman' }
+      ],
     };
   },
   mounted() {
@@ -51,8 +127,11 @@ export default {
     window.removeEventListener('mouseup', this.stopDrag);
   },
   computed: {
+    currentColor() {
+      return this.projectColor;
+    },
     selectedColorHex() {
-      const color = this.garmentColors.find(c => c.name === this.selectedColor);
+      const color = this.garmentColors.find(c => c.name === this.currentColor);
       return color ? color.hex : '#EDEDED';
     },
     canvasSpriteStyle() {
@@ -66,7 +145,7 @@ export default {
         'LightBlue', 'Cyan', 'SkyBlue', 'Blue',
         'Green', 'LightGreen', 'Yellow', 'DarkYellow'
       ];
-      const idx = colorOrder.indexOf(this.selectedColor);
+      const idx = colorOrder.indexOf(this.currentColor);
       const row = Math.floor(idx / gridCols);
       const col = idx % gridCols;
       const x = -(col * segmentWidth);
@@ -80,15 +159,13 @@ export default {
         position: 'relative',
         marginBottom: '24px',
         border: '1px solid #ccc',
-        marginLeft: '24px',
         overflow: 'hidden',
+        borderRadius: '18px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.10)'
       };
     }
   },
   methods: {
-    selectColor(color) {
-      this.selectedColor = color;
-    },
     imageStyle(layer) {
       return {
         maxWidth: '200px',
@@ -117,31 +194,87 @@ export default {
       if (e.button !== 0) return;
       this.dragging = true;
       this.dragLayer = layer;
+      const canvas = this.$el.querySelector('.canvas-area');
+      const rect = canvas.getBoundingClientRect();
       this.dragOffset = {
-        x: e.clientX - (layer.x || 0),
-        y: e.clientY - (layer.y || 0)
+        x: e.clientX - rect.left - (layer.x || 0),
+        y: e.clientY - rect.top - (layer.y || 0)
       };
       e.preventDefault();
     },
-    startResize(e, layer) {
+    startResize(e, layer, pos) {
       this.resizing = true;
       this.resizeLayer = layer;
       this.resizeStart = {
         x: e.clientX,
         y: e.clientY,
         width: layer.details.width || 200,
-        height: layer.details.height || 40
+        height: layer.details.height || 200,
+        pos: pos, // 'tl', 'tr', 'bl', 'br'
+        x0: layer.x,
+        y0: layer.y
       };
       e.preventDefault();
     },
     onDrag(e) {
       if (this.resizing && this.resizeLayer) {
+        const canvas = this.$el.querySelector('.canvas-area');
+        const rect = canvas.getBoundingClientRect();
         const dx = e.clientX - this.resizeStart.x;
         const dy = e.clientY - this.resizeStart.y;
-        let newWidth = Math.max(40, this.resizeStart.width + dx);
-        let newHeight = Math.max(24, this.resizeStart.height + dy);
+        let newWidth = this.resizeStart.width;
+        let newHeight = this.resizeStart.height;
+        let newX = this.resizeStart.x0;
+        let newY = this.resizeStart.y0;
+        switch (this.resizeStart.pos) {
+          case 'tl':
+            newWidth = Math.max(40, this.resizeStart.width - dx);
+            newHeight = Math.max(24, this.resizeStart.height - dy);
+            newX = this.resizeStart.x0 + dx;
+            newY = this.resizeStart.y0 + dy;
+            break;
+          case 'tr':
+            newWidth = Math.max(40, this.resizeStart.width + dx);
+            newHeight = Math.max(24, this.resizeStart.height - dy);
+            newX = this.resizeStart.x0;
+            newY = this.resizeStart.y0 + dy;
+            break;
+          case 'bl':
+            newWidth = Math.max(40, this.resizeStart.width - dx);
+            newHeight = Math.max(24, this.resizeStart.height + dy);
+            newX = this.resizeStart.x0 + dx;
+            newY = this.resizeStart.y0;
+            break;
+          case 'br':
+            newWidth = Math.max(40, this.resizeStart.width + dx);
+            newHeight = Math.max(24, this.resizeStart.height + dy);
+            newX = this.resizeStart.x0;
+            newY = this.resizeStart.y0;
+            break;
+        }
+        // Clamp to canvas bounds
+        // For left/top handles, clamp newX/newY >= 0
+        if (newX < 0) {
+          newWidth += newX; // shrink width if out of bounds
+          newX = 0;
+        }
+        if (newY < 0) {
+          newHeight += newY;
+          newY = 0;
+        }
+        // For right/bottom, clamp width/height so right/bottom edge stays in canvas
+        if (newX + newWidth > rect.width) {
+          newWidth = rect.width - newX;
+        }
+        if (newY + newHeight > rect.height) {
+          newHeight = rect.height - newY;
+        }
+        newWidth = Math.max(40, newWidth);
+        newHeight = Math.max(24, newHeight);
         this.resizeLayer.details.width = newWidth;
         this.resizeLayer.details.height = newHeight;
+        this.resizeLayer.x = newX;
+        this.resizeLayer.y = newY;
         return;
       }
       if (!this.dragging || !this.dragLayer) return;
@@ -198,10 +331,17 @@ export default {
         return;
       }
       try {
+        // Center the image in the canvas
+        const canvas = this.$el.querySelector('.canvas-area');
+        const rect = canvas.getBoundingClientRect();
+        const width = 200;
+        const height = 200;
+        const x = Math.max(0, Math.round((rect.width - width) / 2));
+        const y = Math.max(0, Math.round((rect.height - height) / 2));
         await fetch(`/api/v1/projects/${this.projectId}/images`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl, width: '200', height: '200' })
+          body: JSON.stringify({ imageUrl, width: String(width), height: String(height), x, y })
         });
         this.uploadSuccess = true;
         setTimeout(() => { this.uploadSuccess = false; }, 1500);
@@ -217,6 +357,13 @@ export default {
         this.uploadError = 'El texto no puede estar vacío';
         return;
       }
+      // Center the text in the canvas
+      const canvas = this.$el.querySelector('.canvas-area');
+      const rect = canvas.getBoundingClientRect();
+      const width = 200;
+      const height = 40;
+      const x = Math.max(0, Math.round((rect.width - width) / 2));
+      const y = Math.max(0, Math.round((rect.height - height) / 2));
       const body = {
         text: String(this.textInput),
         fontColor: String(this.fontColor),
@@ -224,7 +371,11 @@ export default {
         fontSize: Number(this.fontSize),
         isBold: false,
         isItalic: false,
-        isUnderlined: false
+        isUnderlined: false,
+        width,
+        height,
+        x,
+        y
       };
       if (isNaN(body.fontSize) || body.fontSize < 10 || body.fontSize > 100) {
         this.uploadError = 'El tamaño de fuente debe ser un número entre 10 y 100';
@@ -232,33 +383,29 @@ export default {
       }
       this.uploadError = '';
       try {
-        const res = await fetch(`/api/v1/projects/${this.projectId}/texts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        if (!res.ok) {
-          let errMsg = 'Error al crear la capa de texto';
-          try {
-            const err = await res.json();
-            if (err && err.message) errMsg = err.message;
-          } catch {}
-          this.uploadError = errMsg;
-          return;
-        }
+        await designLabService.createTextLayer(this.projectId, body);
         this.textInput = '';
         this.fontColor = '#000000';
         this.fontFamily = 'Arial';
         this.fontSize = 24;
         this.$emit('refreshLayers');
       } catch (e) {
-        this.uploadError = 'Error de red al crear la capa de texto';
+        this.uploadError = e?.message || 'Error al crear la capa de texto';
       }
     },
     async deleteLayer(layerId) {
       await fetch(`/api/v1/projects/${this.projectId}/layers/${layerId}`, { method: 'DELETE' });
       this.$emit('refreshLayers');
-    }
+    },
+    onPrimeFileUpload(event) {
+      const file = event.files ? event.files[0] : (event.target && event.target.files ? event.target.files[0] : null);
+      if (!file) return;
+      this.onImageUpload({ target: { files: [file] } });
+    },
+    showLayerMenu(event, layer) {
+      this.contextLayer = layer;
+      this.$refs.layerMenu.show(event);
+    },
   }
 }
 </script>
@@ -298,10 +445,6 @@ export default {
   border: 2px solid transparent;
   transition: border 0.2s;
 }
-.layer:hover, .layer:focus-within {
-  border: 2px solid #00b894;
-  z-index: 20;
-}
 
 .delete-btn {
   position: absolute;
@@ -330,84 +473,40 @@ export default {
 
 .canvas-area {
   position: relative;
-  width: 340px;
-  height: 440px;
+  width: 600px;
+  height: 600px;
   margin-bottom: 24px;
   background: #fff;
-  border: 2px solid #00b894;
-  border-radius: 18px;
-  margin-left: 24px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  border: 1px solid #ccc;
+}
+.prime-row.minimal-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+}
+.prime-row.minimal-row .p-fileupload {
+  flex: 1 1 0;
+  min-width: 120px;
+}
+.prime-row.minimal-row .p-fileupload .p-button {
+  flex: 1 1 0;
+  min-width: 120px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .design-canvas {
   min-height: 500px;
-  background: #f8fafc;
-  color: #222;
-  padding: 32px 16px 16px 16px;
+  background: #181818;
+  color: #fff;
+  padding: 24px;
   border-radius: 18px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.10);
   max-width: 900px;
   margin: 0 auto;
-}
-
-.color-selector {
-  margin-bottom: 18px;
-}
-.color-list {
-  display: flex;
-  gap: 10px;
-  margin-top: 8px;
-}
-.color-box {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  border: 2px solid #bbb;
-  cursor: pointer;
-  transition: border 0.2s, box-shadow 0.2s;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-}
-.color-box.selected {
-  border: 2px solid #00b894;
-  box-shadow: 0 2px 8px rgba(0,184,148,0.15);
-}
-
-.upload-section, .text-section {
-  margin-top: 18px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.upload-section label, .text-section label {
-  font-weight: 500;
-  margin-right: 8px;
-}
-.upload-section input[type="file"] {
-  border: 1px solid #bbb;
-  border-radius: 6px;
-  padding: 4px 8px;
-  background: #fff;
-}
-.text-section input[type="text"], .text-section input[type="color"], .text-section select, .text-section input[type="number"] {
-  border: 1px solid #bbb;
-  border-radius: 6px;
-  padding: 4px 8px;
-  background: #fff;
-  font-size: 1rem;
-}
-.text-section button {
-  background: #00b894;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 16px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.text-section button:hover {
-  background: #009e74;
 }
 
 /* Loader y feedback para subida de imagen */
@@ -425,72 +524,7 @@ export default {
   margin-left: 10px;
   font-weight: 500;
 }
-</style>
 
-<template>
-  <div class="design-canvas">
-    <!-- Selector de color de polo -->
-    <div class="color-selector">
-      <label>Color del polo:</label>
-      <div class="color-list">
-        <div
-          v-for="color in garmentColors"
-          :key="color.name"
-          :title="color.name"
-          :style="{ background: color.hex }"
-          class="color-box"
-          :class="{ selected: selectedColor === color.name }"
-          @click="selectColor(color.name)"
-        ></div>
-      </div>
-    </div>
-
-    <!-- Canvas de diseño -->
-    <div class="canvas-area" :style="canvasSpriteStyle">
-      <div
-        v-for="layer in layers"
-        :key="layer.id"
-        class="layer"
-        :style="layer.type === 'Image' ? imageStyle(layer) : textStyle(layer)"
-        @mousedown="startDrag($event, layer)"
-      >
-        <img v-if="layer.type === 'Image'" :src="layer.details.imageUrl" draggable="false" :style="{ width: layer.details.width + 'px', height: layer.details.height + 'px' }" />
-        <div v-else-if="layer.type === 'Text'"
-          :style="{ width: layer.details.width ? layer.details.width + 'px' : 'auto', height: layer.details.height ? layer.details.height + 'px' : 'auto', resize: 'both', overflow: 'auto', minWidth: '40px', minHeight: '24px', display: 'inline-block' }"
-          @mousedown.stop="startDrag($event, layer)">{{ layer.details.text }}</div>
-        <div v-if="layer.type === 'Image' || layer.type === 'Text'" class="resize-handle" @mousedown.stop="startResize($event, layer)"></div>
-        <button class="delete-btn" @click.stop="deleteLayer(layer.id)">x</button>
-      </div>
-    </div>
-
-    <!-- Subir imagen -->
-    <div class="upload-section">
-      <label>Subir imagen:</label>
-      <input type="file" @change="onImageUpload" accept="image/*" :disabled="uploading" />
-      <span v-if="uploading" class="upload-loader">Subiendo...</span>
-      <span v-if="uploadSuccess" class="upload-success">¡Imagen subida!</span>
-      <span v-if="uploadError" class="upload-error">{{ uploadError }}</span>
-    </div>
-
-    <!-- Agregar texto -->
-    <div class="text-section">
-      <label>Agregar texto:</label>
-      <input v-model="textInput" placeholder="Texto" />
-      <input v-model="fontColor" type="color" />
-      <select v-model="fontFamily">
-        <option value="Arial">Arial</option>
-        <option value="Verdana">Verdana</option>
-        <option value="Times New Roman">Times New Roman</option>
-      </select>
-      <input v-model.number="fontSize" type="number" min="10" max="100" />
-      <button @click="addTextLayer">Agregar texto</button>
-    </div>
-  </div>
-</template>
-
-
-
-<style scoped>
 /* Estilos mejorados para el canvas y controles */
 .design-canvas {
   min-height: 500px;
@@ -498,39 +532,16 @@ export default {
   color: #fff;
   padding: 24px;
 }
-.color-selector {
-  margin-bottom: 16px;
-}
-.color-list {
-  display: flex;
-  gap: 8px;
-  margin-top: 8px;
-}
-.color-box {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
-  border: 2px solid #333;
-  cursor: pointer;
-  transition: border 0.2s;
-}
-.color-box.selected {
-  border: 2px solid #00e676;
-}
 .canvas-area {
   position: relative;
-  width: 300px;
-  height: 400px;
+  width: 600px;
+  height: 600px;
   margin-bottom: 24px;
   background: #fff;
   border: 1px solid #ccc;
-  margin-left: 24px;
 }
 .layer {
   position: absolute;
-}
-.upload-section, .text-section {
-  margin-top: 16px;
 }
 .delete-btn {
   position: absolute;
@@ -545,6 +556,35 @@ export default {
   cursor: pointer;
   font-size: 14px;
 }
+.selection-border {
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border: 2px solid #2196f3;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 21;
+}
+
+.corner-handle {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border: 2.5px solid #2196f3;
+  border-radius: 50%;
+  z-index: 22;
+  box-shadow: 0 1px 4px rgba(33,150,243,0.12);
+  cursor: pointer;
+  font-size: 14px;
+}
+.corner-handle.tl { top: -8px; left: -8px; cursor: nwse-resize; }
+.corner-handle.tr { top: -8px; right: -8px; cursor: nesw-resize; }
+.corner-handle.bl { bottom: -8px; left: -8px; cursor: nesw-resize; }
+.corner-handle.br { bottom: -8px; right: -8px; cursor: nwse-resize; }
+
 /* Loader y feedback para subida de imagen */
 .upload-loader {
   color: #ffd600;
@@ -557,5 +597,41 @@ export default {
 .upload-error {
   color: #ff5252;
   margin-left: 10px;
+}
+.center-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.fileupload-full-width {
+  flex: 1 1 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+.fileupload-full-width .p-button {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box;
+}
+
+.upload-section-sep,
+.text-options-sep {
+  background: #232323;
+  border-radius: 12px;
+  padding: 18px 18px 14px 18px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 14px; /* Add vertical separation between the two inner divs */
+}
+.text-options-sep {
+  padding-bottom: 10px;
 }
 </style>
