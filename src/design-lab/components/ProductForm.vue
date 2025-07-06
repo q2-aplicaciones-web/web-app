@@ -19,14 +19,14 @@
       </div>
 
       <div class="form-group">
-        <label for="priceCurrency">Price Currency *</label>
+        <label for="priceCurrency">Price Locale *</label>
         <Select 
           id="priceCurrency"
           v-model="formData.priceCurrency"
           :options="currencyOptions"
           optionLabel="label"
           optionValue="value"
-          placeholder="Select currency"
+          placeholder="Select locale"
           class="form-input"
           :class="{ 'p-invalid': errors.priceCurrency }"
         />
@@ -110,8 +110,8 @@ const emit = defineEmits(['update:visible', 'product-created', 'error'])
 // Form data
 const formData = ref({
   priceAmount: null,
-  priceCurrency: 'USD',
-  status: 'available'
+  priceCurrency: 'en-US',
+  status: 'Available'
 })
 
 // Form validation
@@ -120,18 +120,18 @@ const loading = ref(false)
 
 // Options for dropdowns
 const currencyOptions = [
-  { label: 'USD - US Dollar', value: 'USD' },
-  { label: 'EUR - Euro', value: 'EUR' },
-  { label: 'GBP - British Pound', value: 'GBP' },
-  { label: 'CAD - Canadian Dollar', value: 'CAD' },
-  { label: 'AUD - Australian Dollar', value: 'AUD' }
+  { label: 'USD - US Dollar', value: 'en-US' },
+  { label: 'EUR - Euro', value: 'en-EU' },
+  { label: 'GBP - British Pound', value: 'en-GB' },
+  { label: 'CAD - Canadian Dollar', value: 'en-CA' },
+  { label: 'AUD - Australian Dollar', value: 'en-AU' }
 ]
 
 const statusOptions = [
-  { label: 'Available', value: 'available' },
-  { label: 'Out of Stock', value: 'out_of_stock' },
-  { label: 'Discontinued', value: 'discontinued' },
-  { label: 'Coming Soon', value: 'coming_soon' }
+  { label: 'Available', value: 'Available' },
+  { label: 'Out of Stock', value: 'OutOfStock' },
+  { label: 'Discontinued', value: 'Discontinued' },
+  { label: 'Coming Soon', value: 'ComingSoon' }
 ]
 
 // Computed properties
@@ -170,31 +170,61 @@ const handleSubmit = async () => {
     return
   }
 
+  // Check if project has already been published as a product
+  if (props.project?.status === 'Garment') {
+    emit('error', 'This project has already been published as a product and cannot be published again.')
+    return
+  }
+
+  // Check if project has layers
+  if (!props.project?.layers || props.project.layers.length === 0) {
+    emit('error', 'Project must have at least one layer to create a product.')
+    return
+  }
+
   loading.value = true
   
   try {
     const productData = {
-      projectId: String(props.project.id),
-      userId: String(authenticationService.currentUserId.value),
-      priceAmount: Number(formData.value.priceAmount),
-      priceCurrency: String(formData.value.priceCurrency),
-      status: String(formData.value.status)
+      projectId: props.project.id,
+      userId: authenticationService.currentUserId.value,
+      priceAmount: parseFloat(Number(formData.value.priceAmount).toFixed(2)),
+      priceCurrency: formData.value.priceCurrency,
+      status: formData.value.status
     }
 
     console.log('Product creation payload:', JSON.stringify(productData, null, 2));
     console.log('Form data:', JSON.stringify(formData.value, null, 2));
     console.log('Project:', JSON.stringify(props.project, null, 2));
 
-
-    
     const createdProduct = await productCatalogService.createProduct(productData)
+    
+    // Update project status to 'Garment' to mark it as published
+    try {
+      const projectUpdateData = { status: 'Garment' };
+      await fetch(`/api/v1/projects/${props.project.id}/details`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(projectUpdateData)
+      });
+    } catch (statusUpdateError) {
+      console.warn('Failed to update project status after product creation:', statusUpdateError);
+      // Don't fail the entire operation if status update fails
+    }
     
     emit('product-created', createdProduct)
     handleCancel() // Close form and reset
     
   } catch (error) {
     console.error('Error creating product:', error)
-    emit('error', error?.response?.data?.detail || 'Failed to create product')
+    const errorMessage = error?.response?.data?.detail || 
+                        error?.response?.data?.message || 
+                        error?.message || 
+                        'Failed to create product'
+    emit('error', errorMessage)
   } finally {
     loading.value = false
   }
@@ -204,8 +234,8 @@ const handleCancel = () => {
   // Reset form
   formData.value = {
     priceAmount: null,
-    priceCurrency: 'USD',
-    status: 'available'
+    priceCurrency: 'en-US',
+    status: 'Available'
   }
   errors.value = {}
   
@@ -223,8 +253,8 @@ watch(() => props.visible, (newVisible) => {
     // Reset form when dialog opens
     formData.value = {
       priceAmount: null,
-      priceCurrency: 'USD',
-      status: 'available'
+      priceCurrency: 'en-US',
+      status: 'Available'
     }
     errors.value = {}
   }

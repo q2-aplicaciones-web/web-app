@@ -74,7 +74,8 @@
               severity="success"
               size="small"
               @click="openProductForm(project)"
-              :disabled="productFormLoading"
+              :disabled="productFormLoading || project.status === 'Garment'"
+              :title="project.status === 'Garment' ? 'This project has already been published as a product' : 'Create a product from this project'"
             />
             <Button 
               v-if="canDeleteProject(project)"
@@ -214,13 +215,26 @@ const retryLoad = () => {
 };
 
 // Product form methods
-const openProductForm = (project) => {
-  selectedProject.value = project;
+const openProductForm = async (project) => {
+  // Refresh project data to ensure we have the latest status
+  await loadUserProjects();
+  
+  // Find the updated project
+  const updatedProject = projects.value.find(p => p.id === project.id);
+  const projectToUse = updatedProject || project;
+  
+  if (projectToUse.status === 'Garment') {
+    alert('This project has already been published as a product and cannot be published again.');
+    return;
+  }
+  
+  selectedProject.value = projectToUse;
   productFormVisible.value = true;
 };
 
 const handleProductCreated = (product) => {
-
+  // Refresh project list to get updated data
+  loadUserProjects();
   // Optionally show a success message or redirect to product view
   productFormVisible.value = false;
 };

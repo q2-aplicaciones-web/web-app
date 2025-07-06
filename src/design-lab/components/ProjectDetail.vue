@@ -282,6 +282,7 @@ async function saveProject() {
       );
     });
     await Promise.all(promises);
+    
     await refreshLayers();
   } catch (e) {
     console.error('Save error:', e?.response?.data || e);
