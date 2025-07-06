@@ -46,13 +46,41 @@ export default {
     });
     
     if (!res.ok) {
-      const errorData = await res.json();
-      console.error('Product creation failed:', {
+      let errorData;
+      try {
+        const errorText = await res.text();
+        console.log('Raw error response:', errorText);
+        
+        // Try to parse as JSON
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (parseError) {
+          console.error('Error response is not valid JSON:', parseError);
+          errorData = { detail: errorText || `HTTP ${res.status}: ${res.statusText}` };
+        }
+        
+        console.error('Product creation failed:', {
+          status: res.status,
+          statusText: res.statusText,
+          errorData: errorData,
+          rawResponse: errorText
+        });
+      } catch (parseError) {
+        console.error('Failed to read error response:', parseError);
+        errorData = { detail: `HTTP ${res.status}: ${res.statusText}` };
+      }
+      
+      // Log the exact error details
+      console.error('Full error response:', {
+        url: API_URL,
+        method: 'POST',
         status: res.status,
         statusText: res.statusText,
+        headers: Object.fromEntries(res.headers.entries()),
         errorData: errorData
       });
-      throw new Error(errorData.detail || `Failed to create product: ${res.status} ${res.statusText}`);
+      
+      throw new Error(errorData.detail || errorData.message || `Failed to create product: ${res.status} ${res.statusText}`);
     }
     
     return new Product(await res.json());
