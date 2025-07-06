@@ -305,7 +305,26 @@
       "layerCreationFailed": "Error al crear la capa",
       "layerUpdateFailed": "Error al actualizar la capa",
       "layerDeleteFailed": "Error al eliminar la capa",
-      "imageLayerCreationFailed": "Error al crear la capa de imagen"
+      "imageLayerCreationFailed": "Error al crear la capa de imagen",
+      "canvasError": "Error en el lienzo"
+    },
+    "canvas": {
+      "designCanvas": "Lienzo de Diseño",
+      "addLayersMessage": "Agrega capas de texto o imagen para comenzar a diseñar",
+      "garmentColor": "Color de la Prenda",
+      "textLayer": "Capa de Texto",
+      "imageLayer": "Capa de Imagen",
+      "noImage": "Sin Imagen",
+      "zoomIn": "Acercar",
+      "zoomOut": "Alejar",
+      "resetZoom": "Restablecer Zoom",
+      "reset": "Restablecer",
+      "selected": "Seleccionado",
+      "centerAll": "Centrar Todo",
+      "clearSelection": "Limpiar Selección",
+      "export": "Exportar",
+      "exportNotImplemented": "La funcionalidad de exportación se implementaría aquí",
+      "unknown": "Desconocido"
     },
     "messages": {
       "projectCreated": "¡Proyecto creado exitosamente!",

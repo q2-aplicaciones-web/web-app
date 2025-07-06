@@ -318,9 +318,25 @@
       "loadingFailed": "Failed to load project",
       "deleteFailed": "Failed to delete project",
       "layerCreationFailed": "Failed to create layer",
-      "layerUpdateFailed": "Failed to update layer",
-      "layerDeleteFailed": "Failed to delete layer",
-      "imageLayerCreationFailed": "Failed to create image layer"
+      "canvasError": "Canvas error occurred"
+    },
+    "canvas": {
+      "designCanvas": "Design Canvas",
+      "addLayersMessage": "Add text or image layers to start designing",
+      "garmentColor": "Garment Color",
+      "textLayer": "Text Layer",
+      "imageLayer": "Image Layer",
+      "noImage": "No Image",
+      "zoomIn": "Zoom In",
+      "zoomOut": "Zoom Out",
+      "resetZoom": "Reset Zoom",
+      "reset": "Reset",
+      "selected": "Selected",
+      "centerAll": "Center All",
+      "clearSelection": "Clear Selection",
+      "export": "Export",
+      "exportNotImplemented": "Export functionality would be implemented here",
+      "unknown": "Unknown"
     },
     "messages": {
       "projectCreated": "Project created successfully!",
@@ -340,46 +356,6 @@
       "confirm": "Delete Project",
       "menuItem": "Delete Project"
     },
-    "loadingProject": "Loading project...",
-    "projectEditor": "Project Editor",
-    "addText": "Add Text",
-    "addImage": "Add Image",
-    "designCanvas": "Design Canvas",
-    "canvasPlaceholder": "Design Canvas",
-    "canvasDescription": "Add text and image layers to create your design",
-    "projectInfo": "Project Information",
-    "addLayers": "Add Layers",
-    "text": "Text",
-    "image": "Image",
-    "actions": "Actions",
-    "save": "Save",
-    "export": "Export",
-    "saveProject": "Save Project",
-    "exportProject": "Export Project",
-    "addTextLayer": "Add Text Layer",
-    "addImageLayer": "Add Image Layer",
-    "imageLayer": "Image Layer",
-    "dropToAdd": "Drop to add layer",
-    "preview": "Preview",
-    "chooseColor": "Choose T-Shirt Color",
-    "selectedColor": "Selected Color",
-    "clickToSelectImage": "Click to select an image",
-    "chooseImage": "Choose Image",
-    "errorLoadingProject": "Error loading project",
-    "layerProperties": "Layer Properties",
-    "opacity": "Opacity",
-    "position": "Position",
-    "layerOrder": "Layer Order",
-    "fontSize": "Font Size",
-    "fontColor": "Font Color",
-    "fontFamily": "Font Family",
-    "undo": "Undo",
-    "redo": "Redo",
-    "deleteLayer": "Delete Layer",
-    "duplicateLayer": "Duplicate Layer",
-    "bringToFront": "Bring to Front",
-    "sendToBack": "Send to Back",
-    "lastModified": "Last Modified",
     "layerManagement": {
       "title": "Layer Management",
       "layers": "layers",
@@ -451,58 +427,5 @@
       "success": "Image uploaded successfully!",
       "error": "Failed to upload image. Please try again."
     }
-  },
-  "payment": {
-    "checkout": {
-      "title": "Checkout"
-    },
-    "form": {
-      "title": "Payment Details",
-      "name": "Full Name",
-      "namePlaceholder": "Enter your full name",
-      "email": "Email",
-      "emailPlaceholder": "Enter your email address",
-      "address": "Address",
-      "addressPlaceholder": "Enter your address",
-      "zipCode": "ZIP Code",
-      "zipCodePlaceholder": "Enter your ZIP code",
-      "city": "City",
-      "cityPlaceholder": "Enter your city",
-      "payNow": "Pay Now",
-      "processing": "Processing Payment..."
-    },
-    "success": {
-      "title": "Payment Successful!",
-      "message": "Thank you for your purchase. Your payment was processed successfully.",
-      "orderInfo": "Your order has been confirmed and will be processed shortly.",
-      "goHome": "Go Home",
-      "continueShopping": "Continue Shopping"
-    },
-    "error": {
-      "title": "Payment Failed",
-      "message": "There was an error processing your payment. Please try again.",
-      "retry": "Try Again",
-      "goBack": "Go Back"
-    }
-  },
-  "errors": {
-    "genericError": "An error occurred",
-    "networkError": "Network error",
-    "serverError": "Server error",
-    "notFound": "Not found",
-    "unauthorized": "Unauthorized",
-    "forbidden": "Forbidden",
-    "validationError": "Validation error",
-    "timeout": "Request timeout",
-    "unknownError": "Unknown error occurred"
-  },
-  "messages": {
-    "success": "Success",
-    "info": "Information",
-    "warning": "Warning",
-    "confirmDelete": "Are you sure you want to delete this item?",
-    "unsavedChanges": "You have unsaved changes. Are you sure you want to leave?",
-    "operationSuccessful": "Operation completed successfully",
-    "operationFailed": "Operation failed"
   }
 }
