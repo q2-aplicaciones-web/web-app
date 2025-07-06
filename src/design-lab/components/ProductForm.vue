@@ -1,8 +1,8 @@
 <template>
-  <Dialog :visible="visible" @update:visible="$emit('update:visible', $event)" modal header="Create Product" :closable="true" :style="{ width: '500px' }">
+  <Dialog :visible="visible" @update:visible="$emit('update:visible', $event)" modal :header="t('productForm.title')" :closable="true" :style="{ width: '500px' }">
     <form @submit.prevent="handleSubmit" class="product-form">
       <div class="form-group">
-        <label for="priceAmount">Price Amount *</label>
+        <label for="priceAmount">{{ t('productForm.priceAmount') }} *</label>
         <InputNumber 
           id="priceAmount"
           v-model="formData.priceAmount"
@@ -13,20 +13,20 @@
           locale="en-US"
           class="form-input"
           :class="{ 'p-invalid': errors.priceAmount }"
-          placeholder="Enter price amount"
+          :placeholder="t('productForm.enterPriceAmount')"
         />
         <small v-if="errors.priceAmount" class="p-error">{{ errors.priceAmount }}</small>
       </div>
 
       <div class="form-group">
-        <label for="priceCurrency">Price Locale *</label>
+        <label for="priceCurrency">{{ t('productForm.priceLocale') }} *</label>
         <Select 
           id="priceCurrency"
           v-model="formData.priceCurrency"
           :options="currencyOptions"
           optionLabel="label"
           optionValue="value"
-          placeholder="Select locale"
+          :placeholder="t('productForm.selectLocale')"
           class="form-input"
           :class="{ 'p-invalid': errors.priceCurrency }"
         />
@@ -34,14 +34,14 @@
       </div>
 
       <div class="form-group">
-        <label for="status">Product Status *</label>
+        <label for="status">{{ t('productForm.productStatus') }} *</label>
         <Select 
           id="status"
           v-model="formData.status"
           :options="statusOptions"
           optionLabel="label"
           optionValue="value"
-          placeholder="Select status"
+          :placeholder="t('productForm.selectStatus')"
           class="form-input"
           :class="{ 'p-invalid': errors.status }"
         />
@@ -50,22 +50,22 @@
 
       <!-- Project Info (Read-only display) -->
       <div class="project-info-section">
-        <h4>Project Information</h4>
+        <h4>{{ t('productForm.projectInformation') }}</h4>
         <div class="project-display">
           <div class="project-field">
-            <label>Project Title:</label>
-            <span>{{ project?.title || 'No title' }}</span>
+            <label>{{ t('productForm.projectTitle') }}:</label>
+            <span>{{ project?.title || t('productForm.noTitle') }}</span>
           </div>
           <div class="project-field">
-            <label>Project ID:</label>
-            <span>{{ project?.id || 'No ID' }}</span>
+            <label>{{ t('productForm.projectId') }}:</label>
+            <span>{{ project?.id || t('productForm.noId') }}</span>
           </div>
           <div class="project-field">
-            <label>Garment Color:</label>
-            <span>{{ project?.color || 'No color' }}</span>
+            <label>{{ t('productForm.garmentColor') }}:</label>
+            <span>{{ project?.color || t('productForm.noColor') }}</span>
           </div>
           <div class="project-field">
-            <label>Created:</label>
+            <label>{{ t('productForm.created') }}:</label>
             <span>{{ formatDate(project?.createdAt) }}</span>
           </div>
         </div>
@@ -74,14 +74,14 @@
       <div class="form-actions">
         <Button 
           type="button" 
-          label="Cancel" 
+          :label="t('common.cancel')" 
           severity="secondary" 
           @click="handleCancel"
           :disabled="loading"
         />
         <Button 
           type="submit" 
-          label="Create Product" 
+          :label="t('productForm.createProduct')" 
           severity="primary"
           :loading="loading"
           :disabled="loading || !isFormValid"
@@ -93,8 +93,10 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { authenticationService } from '../../iam/services/authentication.service.js'
 import productCatalogService from '../../productCatalog/application/productCatalogService.js'
+import designLabService from '../services/design-lab.service.js'
 import Dialog from 'primevue/dialog'
 import Button from 'primevue/button'
 import InputNumber from 'primevue/inputnumber'
@@ -106,6 +108,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:visible', 'product-created', 'error'])
+
+// Add i18n support
+const { t } = useI18n()
 
 // Form data
 const formData = ref({
@@ -120,18 +125,18 @@ const loading = ref(false)
 
 // Options for dropdowns
 const currencyOptions = [
-  { label: 'USD - US Dollar', value: 'en-US' },
-  { label: 'EUR - Euro', value: 'en-EU' },
-  { label: 'GBP - British Pound', value: 'en-GB' },
-  { label: 'CAD - Canadian Dollar', value: 'en-CA' },
-  { label: 'AUD - Australian Dollar', value: 'en-AU' }
+  { label: t('productForm.currencies.usd'), value: 'en-US' },
+  { label: t('productForm.currencies.eur'), value: 'en-EU' },
+  { label: t('productForm.currencies.gbp'), value: 'en-GB' },
+  { label: t('productForm.currencies.cad'), value: 'en-CA' },
+  { label: t('productForm.currencies.aud'), value: 'en-AU' }
 ]
 
 const statusOptions = [
-  { label: 'Available', value: 'Available' },
-  { label: 'Out of Stock', value: 'OutOfStock' },
-  { label: 'Discontinued', value: 'Discontinued' },
-  { label: 'Coming Soon', value: 'ComingSoon' }
+  { label: t('productForm.status.available'), value: 'Available' },
+  { label: t('productForm.status.outOfStock'), value: 'OutOfStock' },
+  { label: t('productForm.status.discontinued'), value: 'Discontinued' },
+  { label: t('productForm.status.comingSoon'), value: 'ComingSoon' }
 ]
 
 // Computed properties
@@ -201,14 +206,12 @@ const handleSubmit = async () => {
     
     // Update project status to 'Garment' to mark it as published
     try {
-      const projectUpdateData = { status: 'Garment' };
-      await fetch(`/api/v1/projects/${props.project.id}/details`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(projectUpdateData)
+      await designLabService.updateProjectDetails(props.project.id, {
+        status: 'Garment',
+        previewUrl: props.project.previewUrl,
+        color: props.project.color,
+        size: props.project.size,
+        gender: props.project.gender
       });
     } catch (statusUpdateError) {
       console.warn('Failed to update project status after product creation:', statusUpdateError);
