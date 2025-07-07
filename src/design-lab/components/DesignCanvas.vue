@@ -324,45 +324,33 @@ export default {
     async onImageUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
+      
       this.uploading = true;
       this.uploadError = '';
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', env.cloudinaryUploadPreset);
-      formData.append('folder', env.cloudinaryFolder);
-      const url = `https://api.cloudinary.com/v1_1/${env.cloudinaryCloudName}/image/upload`;
-      let imageUrl = '';
+      
       try {
-        const response = await fetch(url, {
-          method: 'POST',
-          body: formData
-        });
-        const data = await response.json();
-        if (!data.secure_url) throw new Error(this.t('designLab.canvas.noImageUrl'));
-        imageUrl = data.secure_url;
-      } catch (err) {
-        this.uploadError = this.t('designLab.canvas.errorUploadingImage');
-        this.uploading = false;
-        return;
-      }
-      try {
-        // Center the image in the canvas
+        // Get canvas dimensions for centering
         const canvas = this.$el.querySelector('.canvas-area');
         const rect = canvas.getBoundingClientRect();
-        const width = 200;
-        const height = 200;
-        const x = Math.max(0, Math.round((rect.width - width) / 2));
-        const y = Math.max(0, Math.round((rect.height - height) / 2));
-        await fetch(`/api/v1/projects/${this.projectId}/images`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageUrl, width: String(width), height: String(height), x, y })
+        const centerX = Math.round(rect.width / 2);
+        const centerY = Math.round(rect.height / 2);
+        
+        // Use the design lab service to create image layer
+        // This handles: Cloudinary upload, dimension calculation, and API call
+        await designLabService.createImageLayerFromFile(this.projectId, file, {
+          maxWidth: 200,
+          maxHeight: 200,
+          centerX,
+          centerY
         });
+        
         this.uploadSuccess = true;
         setTimeout(() => { this.uploadSuccess = false; }, 1500);
         this.$emit('refreshLayers');
+        
       } catch (err) {
-        this.uploadError = this.t('designLab.canvas.errorSavingImage');
+        console.error('Error uploading image:', err);
+        this.uploadError = err.message || this.t('designLab.canvas.errorUploadingImage');
       } finally {
         this.uploading = false;
       }
