@@ -1,4 +1,14 @@
 {
+  "home": {
+    "welcome": "Welcome to the Platform!",
+    "quick_access": "Quickly access the main sections:",
+    "design_lab": "Product Design",
+    "product_catalog": "Product Catalog",
+    "orders_cart": "Orders & Cart",
+    "analytics": "Analytics",
+    "profile": "Profile",
+    "menu_hint": "Use the side menu to navigate more options."
+  },
   "signin": {
     "title": "Welcome Back",
     "subtitle": "Sign in to your account",
@@ -340,6 +350,7 @@
       "noProjects": "No projects yet",
       "createFirstMessage": "Create your first design project to get started!",
       "createFirst": "Create First Project",
+      "emptyTip": "You can create your first project to start designing custom garments.",
       "created": "Created",
       "updated": "Updated",
       "createProduct": "Create Product",

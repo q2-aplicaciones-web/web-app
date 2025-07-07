@@ -17,12 +17,30 @@
       <Button :label="t('common.retry')" severity="secondary" @click="loadProjects" size="small" />
     </Message>
 
-    <!-- Empty State -->
-    <Message v-else-if="projects.length === 0" severity="info" class="empty-state">
-      <h2>{{ t('designLab.projectList.noProjects') }}</h2>
-      <p>{{ t('designLab.projectList.createFirstMessage') }}</p>
-      <Button :label="t('designLab.projectList.createFirst')" icon="pi pi-plus" severity="primary" @click="createNewProject" />
-    </Message>
+    <!-- Empty State Mejorado -->
+    <div v-else-if="projects.length === 0" class="empty-state-layout">
+      <Card class="empty-project-card">
+        <template #content>
+          <div class="empty-content">
+            <i class="pi pi-folder-open" style="font-size: 3rem; color: #bdbdbd; margin-bottom: 1rem;"></i>
+            <h2 style="margin-bottom: 0.5rem;">{{ t('designLab.projectList.noProjects') }}</h2>
+            <p style="margin-bottom: 1.5rem;">{{ t('designLab.projectList.createFirstMessage') }}</p>
+            <Button 
+              :label="t('designLab.projectList.createFirst')" 
+              icon="pi pi-plus" 
+              severity="primary" 
+              @click="createNewProject" 
+              style="margin-bottom: 0.5rem;"
+            />
+            <Divider />
+            <div style="margin-top: 1rem; color: #888;">
+              <i class="pi pi-lightbulb" style="margin-right: 0.5rem; color: #ffd600;"></i>
+              {{ t('designLab.projectList.emptyTip', 'Puedes crear tu primer proyecto para comenzar a diseñar prendas personalizadas.') }}
+            </div>
+          </div>
+        </template>
+      </Card>
+    </div>
 
     <!-- Projects Grid -->
     <div v-else class="projects-grid">
@@ -278,258 +296,32 @@ const dialogVisible = computed({
 .project-list {
   padding: 20px;
 }
-
 .project-list-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
 }
-
-.create-form {
-  background: #f5f5f5;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-}
-
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
 }
-
-.project-card {
-  background: transparent;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 16px;
-  cursor: pointer;
-  transition: box-shadow 0.2s;
-}
-
-.project-card:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.create-project-card {
-  border: 2px #07613f;
-  background: #088b59;
+.empty-state-layout {
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  transition: all 0.2s;
+  min-height: 60vh;
 }
-
-.create-project-card:hover {
-  background: #0cc47d;
-  box-shadow: 0 4px 12px rgba(0,123,255,0.2);
-}
-
-.create-project-content {
-  padding: 20px;
-}
-
-.plus-icon {
-  font-size: 3rem;
-  color: #242424;
-  margin-bottom: 12px;
-  font-weight: bold;
-  line-height: 1;
-}
-
-.project-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.project-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.project-description {
-  color: #666;
-  margin-bottom: 12px;
-}
-
-.project-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9em;
-  color: #999;
-}
-
-.form-group {
-  margin-bottom: 16px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 4px;
-  font-weight: bold;
-}
-
-.form-input {
+.empty-project-card {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-sizing: border-box;
+  max-width: 420px;
 }
-
-.form-input:focus {
-  outline: none;
-  border-color: #007bff;
-}
-
-.form-actions {
+.empty-content {
   display: flex;
-  gap: 12px;
-}
-
-.project-preview {
-  position: relative;
-  margin-bottom: 12px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.garment-preview {
-  width: 100%;
-  height: 120px;
-  background-size: cover;
-  background-position: center;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
-
-.layer-count {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0,0,0,0.7);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.8em;
-}
-
-.project-info {
-  margin-bottom: 12px;
-}
-
-.project-title {
-  margin: 0 0 8px 0;
-  font-size: 1.1em;
-  font-weight: bold;
-}
-
-.project-meta {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-  font-size: 0.9em;
-  color: #666;
-}
-
-.project-dates {
-  font-size: 0.8em;
-  color: #999;
-}
-
-.updated-date {
-  margin-left: 8px;
-}
-
-.color-selector {
-  display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.color-option {
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  background-size: cover;
-  background-position: center;
-}
-
-.color-option:hover {
-  border-color: #007bff;
-}
-
-.color-option.active {
-  border-color: #007bff;
-  box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
-.warning-text {
-  color: #dc3545;
-  font-weight: bold;
-}
-
-.loading-state, .error-state {
-  text-align: center;
-  padding: 40px;
-}
-
-.error-state {
-  color: #dc3545;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 40px;
-  color: #666;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  min-width: 400px;
-  max-width: 90vw;
+  padding: 2rem 1rem;
 }
 </style>
