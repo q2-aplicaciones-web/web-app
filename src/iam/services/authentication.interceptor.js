@@ -1,3 +1,4 @@
+import env from '../../env.js';
 import { authenticationService } from './authentication.service.js';
 
 /**
@@ -99,7 +100,7 @@ export const setupAxiosInterceptors = (axiosInstance) => {
  */
 export class AuthenticatedHttpClient {
   constructor(baseURL = '') {
-    this.baseURL = baseURL || import.meta.env.VITE_API_BASE_URL || 'http://localhost:5297';
+    this.baseURL = env.apiBaseUrl || baseURL; // Default to environment variable
   }
 
   /**
