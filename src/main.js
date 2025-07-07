@@ -9,6 +9,7 @@ import router from "./router/index.js";
 import { i18n } from "./i18n.js";
 import ToastService from "primevue/toastservice";
 import Toast from "primevue/toast";
+import Tooltip from "primevue/tooltip";
 
 const app = createApp(App)
     .use(router)
@@ -18,5 +19,8 @@ const app = createApp(App)
 
 // Register Toast component globally
 app.component('Toast', Toast);
+
+// Register Tooltip directive globally
+app.directive('tooltip', Tooltip);
 
 app.mount("#app");

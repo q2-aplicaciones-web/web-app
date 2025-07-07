@@ -1,3 +1,44 @@
+/**
+ * Product Catalog API Infrastructure Layer
+ * 
+ * This module handles all HTTP requests to the Product Catalog API endpoints.
+ * 
+ * API ENDPOINTS USED:
+ * 
+ * 1. GET /api/v1/products
+ *    - Description: Fetch all products, optionally filtered by projectId
+ *    - Query params: projectId (optional) - Filter products by project
+ *    - Headers: Authorization: Bearer {token}
+ *    - Response: Array of product objects
+ * 
+ * 2. GET /api/v1/products/{id}
+ *    - Description: Fetch a specific product by ID
+ *    - Path params: id (required) - Product UUID
+ *    - Headers: Authorization: Bearer {token}
+ *    - Response: Single product object
+ * 
+ * 3. POST /api/v1/products
+ *    - Description: Create a new product
+ *    - Headers: Authorization: Bearer {token}, Content-Type: application/json
+ *    - Body: Product data object
+ *    - Response: Created product object
+ * 
+ * 4. PUT /api/v1/products/{id}
+ *    - Description: Update an existing product
+ *    - Path params: id (required) - Product UUID
+ *    - Headers: Authorization: Bearer {token}, Content-Type: application/json
+ *    - Body: Updated product data object
+ *    - Response: Updated product object
+ * 
+ * 5. DELETE /api/v1/products/{id}
+ *    - Description: Delete a product
+ *    - Path params: id (required) - Product UUID
+ *    - Headers: Authorization: Bearer {token}
+ *    - Response: 204 No Content
+ * 
+ * All responses are wrapped in Product domain objects using the Product constructor.
+ */
+
 // Infraestructura: productCatalogApi.js
 import Product from '../domain/Product';
 

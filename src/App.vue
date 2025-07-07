@@ -9,8 +9,10 @@ import Popover from "primevue/popover";
 import { useRouter, useRoute } from "vue-router";
 import { ref, computed, provide, watch, nextTick, onMounted, onUnmounted } from "vue";
 import ShoppingCartPopover from "./orders-processing/components/shopping-cart-popover.vue";
+import localCartService from "./orders-processing/services/local-cart.service.js";
 import { authenticationService } from "./iam/services/authentication.service.js";
 import { useI18n } from 'vue-i18n';
+import { env } from './env.js';
 
 const router = useRouter();
 const route = useRoute();
@@ -40,11 +42,24 @@ const titleInput = ref(null);
 const updateProjectFunction = ref(null);
 const popoverRef = ref(null);
 const currentUserId = ref(authenticationService.currentUserId.value || "user-1");
-const currencyCode = ref('PEN'); // Permite cambiar el tipo de moneda
+const currencyCode = ref(env.currencyCode || 'USD'); // Currency from environment config
+const cartItemCount = ref(0);
 
 // Watch for user ID changes
 watch(() => authenticationService.currentUserId.value, (newUserId) => {
   currentUserId.value = newUserId || "user-1";
+});
+
+// Cart item count watcher
+function updateCartCount() {
+  cartItemCount.value = localCartService.getCartItemCount();
+}
+
+// Update cart count on mount and periodically
+onMounted(() => {
+  updateCartCount();
+  // Update cart count every 2 seconds to catch changes from other parts of the app
+  setInterval(updateCartCount, 2000);
 });
 
 // Provide the dynamic title so child components can update it
@@ -284,14 +299,17 @@ watch(locale, () => {
                                 severity="primary"
                                 @click="router.push('/design-lab/new')"
                             />
-                            <Button
-                                icon="pi pi-shopping-cart"
-                                severity="secondary"
-                                rounded
-                                text
-                                aria-label="Cart"
-                                @click="showCartPopover"
-                            />
+                            <div class="cart-button-container">
+                                <Button
+                                    icon="pi pi-shopping-cart"
+                                    severity="secondary"
+                                    rounded
+                                    text
+                                    aria-label="Cart"
+                                    @click="showCartPopover"
+                                />
+                                <span v-if="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
+                            </div>
                             <Popover ref="popoverRef">
                                 <ShoppingCartPopover :user-id="currentUserId" :currency-code="currencyCode" />
                             </Popover>
@@ -421,5 +439,28 @@ main {
 :deep(.p-menu),
 :deep(.p-toolbar) {
     border-radius: 0 !important;
+}
+
+.cart-button-container {
+    position: relative;
+    display: inline-block;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--red-500);
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 </style>

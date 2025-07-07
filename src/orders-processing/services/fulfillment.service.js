@@ -1,3 +1,104 @@
+// Fulfillment Service - Handles fulfillment-related API calls
+// Endpoints documented in /docs/api-endpoints.md
+
+const API_BASE_URL = '/api/v1';
+
+class FulfillmentService {
+  /**
+   * Create fulfillment when manufacturer is selected
+   * Endpoint: POST /api/v1/fulfillments
+   * Used for: When user selects manufacturer in cart
+   */
+  async createFulfillment(fulfillmentData) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/fulfillments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(fulfillmentData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create fulfillment');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating fulfillment:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get fulfillments (for manufacturer dashboard)
+   * Endpoint: GET /api/v1/fulfillments
+   * Used for: Manufacturer orders dashboard
+   */
+  async getAllFulfillments(filters = {}) {
+    try {
+      const queryParams = new URLSearchParams();
+      
+      // Add filters to query parameters
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value);
+        }
+      });
+
+      const url = `${API_BASE_URL}/fulfillments${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch fulfillments');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching fulfillments:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get items for a specific fulfillment
+   * Endpoint: GET /api/v1/fulfillment-items/{fulfillmentId}
+   * Used for: Fulfillment detail view
+   */
+  async getFulfillmentItems(fulfillmentId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/fulfillment-items/${fulfillmentId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to fetch fulfillment items');
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching fulfillment items:', error);
+      throw error;
+    }
+  }
+}
+
+// Legacy composable for backward compatibility
 import { FulfillmentAssembler } from './fulfillment.assembler.js';
 import { env } from '../../env.js';
 
@@ -16,46 +117,10 @@ export function useFulfillmentService() {
     return data.map(FulfillmentAssembler.toEntityFromResource);
   }
 
-  async function getFulfillmentsByOrder(orderId) {
-    const res = await fetch(`${API_BASE_URL}/fulfillments?order_id=${orderId}`);
-    const data = await res.json();
-    return data.map(FulfillmentAssembler.toEntityFromResource);
-  }
-
-  async function getFulfillmentById(id) {
-    const res = await fetch(`${API_BASE_URL}/fulfillments/${id}`);
-    const data = await res.json();
-    return FulfillmentAssembler.toEntityFromResource(data);
-  }
-
-  async function createFulfillment(fulfillment) {
-    const body = FulfillmentAssembler.toResourceFromEntity(fulfillment);
-    const res = await fetch(`${API_BASE_URL}/fulfillments`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    return FulfillmentAssembler.toEntityFromResource(data);
-  }
-
-  async function updateFulfillment(id, fulfillment) {
-    const body = FulfillmentAssembler.toResourceFromEntity(fulfillment);
-    const res = await fetch(`${API_BASE_URL}/fulfillments/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    return FulfillmentAssembler.toEntityFromResource(data);
-  }
-
   return {
     getAllFulfillments,
-    getFulfillmentsByManufacturer,
-    getFulfillmentsByOrder,
-    getFulfillmentById,
-    createFulfillment,
-    updateFulfillment
+    getFulfillmentsByManufacturer
   };
 }
+
+export default new FulfillmentService();
