@@ -3,25 +3,28 @@
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import Divider from 'primevue/divider';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 </script>
 
 <template>
   <div class="welcome-layout">
     <Card class="welcome-card">
       <template #title>
-        <span>¡Bienvenido a la Plataforma!</span>
+        <span>{{ t('home.welcome') }}</span>
       </template>
       <template #content>
-        <p>Accede rápidamente a las principales secciones:</p>
+        <p>{{ t('home.quick_access') }}</p>
         <div class="links-list">
-          <Button label="Diseño de Productos" icon="pi pi-palette" class="p-button-text" to="/design-lab" />
-          <Button label="Catálogo de Productos" icon="pi pi-list" class="p-button-text" to="/product-catalog" />
-          <Button label="Órdenes y Carrito" icon="pi pi-shopping-cart" class="p-button-text" to="/shopping-cart" />
-          <Button label="Estadísticas" icon="pi pi-chart-bar" class="p-button-text" to="/analytics" />
-          <Button label="Perfil" icon="pi pi-user" class="p-button-text" to="/profile" />
+          <Button :label="t('home.design_lab')" icon="pi pi-palette" class="p-button-text" to="/design-lab" />
+          <Button :label="t('home.product_catalog')" icon="pi pi-list" class="p-button-text" to="/product-catalog" />
+          <Button :label="t('home.orders_cart')" icon="pi pi-shopping-cart" class="p-button-text" to="/shopping-cart" />
+          <Button :label="t('home.analytics')" icon="pi pi-chart-bar" class="p-button-text" to="/analytics" />
+          <Button :label="t('home.profile')" icon="pi pi-user" class="p-button-text" to="/profile" />
         </div>
         <Divider />
-        <small>Utiliza el menú lateral para navegar por más opciones.</small>
+        <small>{{ t('home.menu_hint') }}</small>
       </template>
     </Card>
   </div>

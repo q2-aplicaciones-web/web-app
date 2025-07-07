@@ -1,4 +1,14 @@
 {
+  "home": {
+    "welcome": "¡Bienvenido a la Plataforma!",
+    "quick_access": "Accede rápidamente a las principales secciones:",
+    "design_lab": "Diseño de Productos",
+    "product_catalog": "Catálogo de Productos",
+    "orders_cart": "Órdenes y Carrito",
+    "analytics": "Estadísticas",
+    "profile": "Perfil",
+    "menu_hint": "Utiliza el menú lateral para navegar por más opciones."
+  },
   "signin": {
     "title": "Bienvenido de vuelta",
     "subtitle": "Inicia sesión en tu cuenta",
