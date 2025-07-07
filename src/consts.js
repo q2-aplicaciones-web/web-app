@@ -149,10 +149,12 @@ export const DEFAULT_LAYER_POSITION = {
 }
 
 // Cloudinary Configuration (KEEP EXISTING)
+import { env } from './env.js';
+
 export const CLOUDINARY_CONFIG = {
-    CLOUD_NAME: 'dkkfv72vo',
-    UPLOAD_PRESET: 'teelab',
-    FOLDER: 'design-lab',
+    CLOUD_NAME: env.cloudinaryCloudName,
+    UPLOAD_PRESET: env.cloudinaryUploadPreset,
+    FOLDER: env.cloudinaryFolder,
     // Garment sprite configuration
     GARMENT_SPRITE: {
         TOTAL_WIDTH: 2400,

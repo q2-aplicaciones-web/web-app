@@ -59,6 +59,7 @@ import InputNumber from 'primevue/inputnumber';
 import ContextMenu from 'primevue/contextmenu';
 import designLabService from '../services/design-lab.service.js'
 import cloudinaryService from '../services/cloudinary.service.js';
+import { env } from '../../env.js';
 export default {
   name: 'DesignCanvas',
   components: { Button, FileUpload, InputText, Select, InputNumber, ContextMenu },
@@ -108,7 +109,7 @@ export default {
       return color ? color.hex : '#EDEDED';
     },
     canvasSpriteStyle() {
-      const spriteUrl = import.meta.env.VITE_GARMENT_COLOR_IMAGE_URL || 'https://res.cloudinary.com/dkkfv72vo/image/upload/f_webp,q_auto/v1748292478/FIJITA_xe3j7z';
+      const spriteUrl = env.garmentColorImageUrl || 'https://res.cloudinary.com/dkkfv72vo/image/upload/f_webp,q_auto/v1748292478/FIJITA_xe3j7z';
       const segmentWidth = 600;
       const segmentHeight = 600;
       const gridCols = 4;
@@ -327,10 +328,9 @@ export default {
       this.uploadError = '';
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('upload_preset', 'teelab');
-      formData.append('folder', 'design-lab');
-      const cloudName = 'dkkfv72vo';
-      const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+      formData.append('upload_preset', env.cloudinaryUploadPreset);
+      formData.append('folder', env.cloudinaryFolder);
+      const url = `https://api.cloudinary.com/v1_1/${env.cloudinaryCloudName}/image/upload`;
       let imageUrl = '';
       try {
         const response = await fetch(url, {
