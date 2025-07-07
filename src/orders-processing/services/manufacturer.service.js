@@ -23,16 +23,19 @@
 
 const API_BASE_URL = '/api/v1';
 
+// Debug logging for service initialization
+console.log('🏭 ManufacturerService initialized with API_BASE_URL:', API_BASE_URL);
+console.log('🌐 Current window.location.origin:', window.location.origin);
+
 class ManufacturerService {
   /**
    * Fetch all available manufacturers, optionally filtered by userId
-   * Endpoint: GET /api/v1/manufacturers
-   * Query Parameters: userId (optional) - Filter manufacturers by user UUID
+   * Endpoint: GET /api/v1/manufacturers OR GET /api/v1/manufacturers/users/{userId}
    * Used for: Manufacturer selection dropdown in cart
    * 
    * Response Schema:
    * {
-   *   id: "uuid-string",
+   *   id: "manufacturer-uuid-string",
    *   userId: "uuid-string", 
    *   name: "Manufacturer Name",
    *   address_Street: "123 Factory St",
@@ -45,13 +48,21 @@ class ManufacturerService {
    * }
    */
   async getAllManufacturers(userId = null) {
+    console.log('🏭 ManufacturerService.getAllManufacturers() called with userId:', userId);
+    
     try {
-      const url = new URL(`${API_BASE_URL}/manufacturers`, window.location.origin);
-      
-      // Add userId filter if provided
+      // Use the new dedicated endpoint for user-specific manufacturers if userId is provided
+      let url;
       if (userId) {
-        url.searchParams.append('userId', userId);
+        url = new URL(`${API_BASE_URL}/manufacturers/users/${userId}`, window.location.origin);
+        console.log('🔍 Using user-specific endpoint for userId:', userId);
+      } else {
+        url = new URL(`${API_BASE_URL}/manufacturers`, window.location.origin);
+        console.log('� Using general manufacturers endpoint');
       }
+
+      console.log('📡 Making request to:', url.toString());
+      console.log('🔐 Using token:', localStorage.getItem('token') ? 'Present' : 'Missing');
 
       const response = await fetch(url, {
         method: 'GET',
@@ -61,26 +72,54 @@ class ManufacturerService {
         }
       });
 
+      console.log('📊 Response status:', response.status, response.statusText);
+      console.log('📋 Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        console.error('❌ API Error Response:', errorData);
         throw new Error(errorData.detail || errorData.message || `HTTP ${response.status}: Failed to fetch manufacturers`);
       }
 
       const manufacturers = await response.json();
-      
+      console.log('✅ Raw manufacturers data:', manufacturers);
+      console.log('📈 Number of manufacturers received:', Array.isArray(manufacturers) ? manufacturers.length : 'Not an array');
+
+      if (!Array.isArray(manufacturers)) {
+        console.error('❌ Expected array but received:', typeof manufacturers, manufacturers);
+        throw new Error('API returned invalid data format - expected array of manufacturers');
+      }
+
       // Validate and enhance manufacturer data
-      return manufacturers.map(manufacturer => ({
-        ...manufacturer,
-        // Ensure required fields have fallback values for UI compatibility
-        averageProductionTime: manufacturer.averageProductionTime || 7,
-        qualityRating: manufacturer.qualityRating || 0,
-        specialties: manufacturer.specialties || [],
-        // Add computed fields for better UX
-        displayLocation: this.formatManufacturerLocation(manufacturer),
-        estimatedDeliveryRange: this.calculateDeliveryRange(manufacturer)
-      }));
+      const enhancedManufacturers = manufacturers.map((manufacturer, index) => {
+        console.log(`🔧 Processing manufacturer ${index + 1}:`, manufacturer);
+        
+        const enhanced = {
+          ...manufacturer,
+          // Ensure required fields have fallback values for UI compatibility
+          averageProductionTime: manufacturer.averageProductionTime || 7,
+          qualityRating: manufacturer.qualityRating || 0,
+          specialties: manufacturer.specialties || [],
+          // Add computed fields for better UX
+          displayLocation: this.formatManufacturerLocation(manufacturer),
+          estimatedDeliveryRange: this.calculateDeliveryRange(manufacturer)
+        };
+
+        console.log(`✨ Enhanced manufacturer ${index + 1}:`, enhanced);
+        return enhanced;
+      });
+
+      console.log('🎉 Successfully processed all manufacturers:', enhancedManufacturers.length);
+      return enhancedManufacturers;
+
     } catch (error) {
-      console.error('Error fetching manufacturers:', error);
+      console.error('💥 Error in getAllManufacturers:', error);
+      console.error('📍 Error stack:', error.stack);
+      console.error('🔍 Error details:', {
+        name: error.name,
+        message: error.message,
+        cause: error.cause
+      });
       throw new Error(`Failed to load manufacturers: ${error.message}`);
     }
   }
@@ -91,12 +130,19 @@ class ManufacturerService {
    * Used for: Displaying manufacturer info in cart/order
    */
   async getManufacturerById(manufacturerId) {
+    console.log('🏭 ManufacturerService.getManufacturerById() called with ID:', manufacturerId);
+    
     if (!manufacturerId) {
+      console.error('❌ No manufacturer ID provided');
       throw new Error('Manufacturer ID is required');
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/manufacturers/${manufacturerId}`, {
+      const url = `${API_BASE_URL}/manufacturers/${manufacturerId}`;
+      console.log('📡 Making request to:', url);
+      console.log('🔐 Using token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -104,15 +150,19 @@ class ManufacturerService {
         }
       });
 
+      console.log('📊 Response status:', response.status, response.statusText);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('❌ API Error Response:', errorData);
         throw new Error(errorData.detail || `HTTP ${response.status}: Failed to fetch manufacturer`);
       }
 
       const manufacturer = await response.json();
+      console.log('✅ Raw manufacturer data:', manufacturer);
       
       // Enhance manufacturer data
-      return {
+      const enhanced = {
         ...manufacturer,
         averageProductionTime: manufacturer.averageProductionTime || 7,
         qualityRating: manufacturer.qualityRating || 0,
@@ -120,8 +170,12 @@ class ManufacturerService {
         displayLocation: this.formatManufacturerLocation(manufacturer),
         estimatedDeliveryRange: this.calculateDeliveryRange(manufacturer)
       };
+
+      console.log('✨ Enhanced manufacturer data:', enhanced);
+      return enhanced;
     } catch (error) {
-      console.error('Error fetching manufacturer:', error);
+      console.error('💥 Error in getManufacturerById:', error);
+      console.error('📍 Error stack:', error.stack);
       throw new Error(`Failed to load manufacturer details: ${error.message}`);
     }
   }
@@ -307,6 +361,69 @@ class ManufacturerService {
       throw new Error(`Failed to load manufacturers by specialty: ${error.message}`);
     }
   }
+  /**
+   * Debug function to test manufacturer service connectivity
+   * Call this from browser console: window.debugManufacturers()
+   */
+  async debugConnection() {
+    console.log('🔧 DEBUG: Testing manufacturer service connection...');
+    
+    try {
+      console.log('🔧 DEBUG: API_BASE_URL:', API_BASE_URL);
+      console.log('🔧 DEBUG: window.location.origin:', window.location.origin);
+      console.log('🔧 DEBUG: localStorage token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+      
+      // Test both endpoints
+      const endpoints = [
+        { name: 'General manufacturers', url: `${API_BASE_URL}/manufacturers` },
+        { name: 'User-specific manufacturers', url: `${API_BASE_URL}/manufacturers/users/86256103-fd81-4f69-90d5-a32b1a47c7f6` }
+      ];
+
+      for (const endpoint of endpoints) {
+        console.log(`🔧 DEBUG: Testing ${endpoint.name}...`);
+        const testUrl = new URL(endpoint.url, window.location.origin);
+        console.log('🔧 DEBUG: Full test URL:', testUrl.toString());
+        
+        const response = await fetch(testUrl, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        console.log(`🔧 DEBUG: ${endpoint.name} Response:`, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: Object.fromEntries(response.headers.entries()),
+          url: response.url
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`🔧 DEBUG: ${endpoint.name} Response data:`, data);
+          console.log(`🔧 DEBUG: ${endpoint.name} Data type:`, typeof data);
+          console.log(`🔧 DEBUG: ${endpoint.name} Is array:`, Array.isArray(data));
+        } else {
+          const errorData = await response.text();
+          console.log(`🔧 DEBUG: ${endpoint.name} Error response:`, errorData);
+        }
+      }
+      
+      return { success: true, message: 'Debug tests completed' };
+    } catch (error) {
+      console.error('🔧 DEBUG: Exception:', error);
+      return { success: false, exception: error.message };
+    }
+  }
 }
 
-export default new ManufacturerService();
+const manufacturerService = new ManufacturerService();
+
+// Add debug function to window for easy testing
+if (typeof window !== 'undefined') {
+  window.debugManufacturers = () => manufacturerService.debugConnection();
+  console.log('🔧 Debug function available: window.debugManufacturers()');
+}
+
+export default manufacturerService;

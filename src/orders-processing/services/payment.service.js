@@ -6,12 +6,12 @@ const API_BASE_URL = '/api/v1';
 class PaymentService {
   /**
    * Create Stripe payment intent for checkout
-   * Endpoint: POST /api/v1/payments/create-intent
+   * Endpoint: POST /api/v1/orders/payment-intents
    * Used for: Checkout process
    */
   async createPaymentIntent(paymentData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/payments/create-intent`, {
+      const response = await fetch(`${API_BASE_URL}/orders/payment-intents`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

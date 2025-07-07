@@ -77,11 +77,10 @@
  */
 
 import { authenticationService } from '../../iam/services/authentication.service.js';
-import { useFulfillmentService } from './fulfillment.service.js';
+import fulfillmentService from './fulfillment.service.js';
 import { env } from '../../env.js';
 
 export function useManufacturerOrders() {
-  const fulfillmentService = useFulfillmentService();
 
   async function getManufacturerOrders() {
     try {
@@ -118,19 +117,21 @@ export function useManufacturerOrders() {
   }
 
   async function findManufacturerByUserId(userId) {
-    const response = await fetch(`${env.apiBaseUrl}/manufacturers`, {
+    // Use the new dedicated endpoint for user-specific manufacturers
+    const response = await fetch(`${env.apiBaseUrl}/manufacturers/users/${userId}`, {
       headers: {
         'Authorization': `Bearer ${getAuthToken()}`
       }
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch manufacturers: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to fetch manufacturer for user: ${response.status} ${response.statusText}`);
     }
 
     const manufacturers = await response.json();
-    // Filter by userId on client side since API doesn't support query filtering
-    return manufacturers?.find(manufacturer => manufacturer.userId === userId) || null;
+    // The new endpoint returns all manufacturers for the user, take the first one
+    // If no manufacturers are found, the array will be empty
+    return Array.isArray(manufacturers) && manufacturers.length > 0 ? manufacturers[0] : null;
   }
 
   async function processFulfillmentOrder(fulfillment) {

@@ -324,6 +324,8 @@
     "rating": "Calificación",
     "loadingManufacturers": "Cargando fabricantes...",
     "loadManufacturersError": "Error al cargar fabricantes",
+    "noManufacturers": "No hay fabricantes disponibles",
+    "noManufacturersHelp": "Por favor contacta soporte si necesitas ayuda con la disponibilidad de fabricantes",
     "estimatedDelivery": "Entrega estimada",
     "days": "días",
     "shippingInformation": "Información de Envío",
@@ -335,11 +337,13 @@
     "country": "País",
     "selectCountry": "Selecciona un país...",
     "backToCart": "Volver al Carrito",
-    "placeOrder": "Realizar Pedido",
-    "error": "Error de Pago",
-    "warning": "Advertencia",
+    "backToCheckout": "Volver al Checkout",
+    "proceedToPayment": "Proceder al Pago",
     "fillAllFields": "Por favor completa todos los campos requeridos",
-    "success": "Pedido Realizado",
+    "placeOrder": "Realizar Pedido",
+    "error": "Error",
+    "warning": "Advertencia",
+    "success": "Éxito",
     "orderPlaced": "¡Tu pedido ha sido realizado exitosamente!",
     "orderError": "Error al realizar el pedido. Por favor intenta de nuevo."
   },
@@ -421,10 +425,14 @@
     "duplicate": "Duplicar",
     "sell": "Vender",
     "delete": "Eliminar",
-    "status": "Estado",
     "color": "Color",
     "noPreview": "Sin vista previa",
     "help": "Ayuda",
+    "status": {
+      "draft": "Borrador",
+      "published": "Publicado",
+      "inProgress": "En Progreso"
+    },
     "garmentNotice": "Este proyecto ya está en producción y no puede ser modificado",
     "cannotEdit": "No se puede editar el proyecto - ya está en producción",
     "cannotSell": "No se puede vender el proyecto - ya está en producción",
@@ -641,8 +649,60 @@
     "fulfillments": "Fulfillments"
   },
   "payment": {
+    "processing": "Procesando pago...",
+    "orderSummary": "Resumen del Pedido",
+    "total": "Total",
+    "payNow": "Pagar {amount}",
+    "retry": "Intentar Nuevamente",
+    "success": {
+      "title": "¡Pago Exitoso!",
+      "message": "Gracias por tu compra. Tu pago fue procesado exitosamente.",
+      "continue": "Continuar"
+    },
+    "error": {
+      "loadingCart": "Error cargando datos del carrito",
+      "creatingIntent": "Error creando intención de pago: {message}",
+      "stripeInit": "Error inicializando Stripe",
+      "stripeSetup": "Error configurando formulario de pago",
+      "notReady": "Sistema de pago no está listo. Por favor espera.",
+      "payment": "Error de pago: {message}",
+      "processing": "Error procesando pago: {message}",
+      "initialization": "Error inicializando pago"
+    },
     "checkout": {
-      "title": "Finalizar Compra"
+      "title": "Finalizar Compra",
+      "orderSummary": "Resumen del Pedido",
+      "loading": "Cargando checkout...",
+      "proceedToPayment": "Proceder al Pago",
+      "backToCheckout": "Volver al Checkout",
+      "backToCart": "Volver al Carrito",
+      "success": "¡Pedido realizado exitosamente!",
+      "orderPlaced": "Tu pedido ha sido realizado y será procesado pronto.",
+      "error": "Error de Checkout",
+      "orderError": "Hubo un error procesando tu pedido después del pago. Por favor contacta soporte.",
+      "shippingInfo": "Información de Envío",
+      "shippingInformation": "Información de Envío",
+      "selectManufacturer": "Seleccionar Fabricante",
+      "chooseManufacturer": "Elegir Fabricante",
+      "selectManufacturerPlaceholder": "Selecciona un fabricante",
+      "loadingManufacturers": "Cargando fabricantes...",
+      "loadManufacturersError": "Error cargando fabricantes",
+      "noManufacturers": "No hay fabricantes disponibles",
+      "noManufacturersHelp": "Por favor contacta soporte si necesitas ayuda con la disponibilidad de fabricantes",
+      "manufacturerSelected": "Fabricante Seleccionado",
+      "fulfillmentUpdated": "Seleccionado {name}. Entrega estimada: {days}",
+      "validationError": "Por favor completa todos los campos requeridos",
+      "manufacturerRequired": "Por favor selecciona un fabricante",
+      "estimatedDelivery": "Entrega estimada",
+      "days": "días",
+      "rating": "Calificación",
+      "fullName": "Nombre Completo",
+      "address": "Dirección",
+      "city": "Ciudad",
+      "state": "Estado/Provincia",
+      "zip": "Código Postal",
+      "country": "País",
+      "selectCountry": "Selecciona un país"
     },
     "form": {
       "title": "Detalles de Pago",
@@ -658,19 +718,6 @@
       "cityPlaceholder": "Ingresa tu ciudad",
       "payNow": "Pagar Ahora",
       "processing": "Procesando Pago..."
-    },
-    "success": {
-      "title": "¡Pago Exitoso!",
-      "message": "Gracias por tu compra. Tu pago fue procesado exitosamente.",
-      "orderInfo": "Tu pedido ha sido confirmado y será procesado en breve.",
-      "goHome": "Ir al Inicio",
-      "continueShopping": "Continuar Comprando"
-    },
-    "error": {
-      "title": "Pago Fallido",
-      "message": "Hubo un error al procesar tu pago. Por favor intenta de nuevo.",
-      "retry": "Intentar Nuevamente",
-      "goBack": "Volver"
     }
   },
   "language": {

@@ -174,6 +174,7 @@
         </div>
         <div v-else-if="manufacturers.length === 0" class="no-manufacturers">
           <p>{{ $t('cart.noManufacturers') }}</p>
+          <small>{{ $t('checkout.noManufacturersHelp') }}</small>
         </div>
         <div v-else class="manufacturer-selection">
           <div class="form-group">
@@ -327,8 +328,20 @@
         </div>
       </div>
 
+      <!-- Payment Section -->
+      <div v-if="cartProducts.length > 0 && selectedManufacturer && isFormValid && showPayment" class="checkout-section">
+        <h2>{{ $t('payment.checkout.title') }}</h2>
+        <StripeCheckout
+          :custom-amount="cartSummary.totalAmount"
+          :custom-currency="env.currencyCode"
+          @payment-success="handlePaymentSuccess"
+          @payment-error="handlePaymentError"
+          @payment-processing="handlePaymentProcessing"
+        />
+      </div>
+
       <!-- Checkout Actions -->
-      <div v-if="cartProducts.length > 0 && selectedManufacturer" class="checkout-actions">
+      <div v-if="cartProducts.length > 0 && selectedManufacturer && !showPayment" class="checkout-actions">
         <Button 
           :label="$t('checkout.backToCart')" 
           severity="secondary" 
@@ -336,11 +349,20 @@
           @click="goBack"
         />
         <Button 
-          :label="`${$t('checkout.placeOrder')} - ${currency(cartSummary.totalAmount)}`" 
+          :label="`${$t('checkout.proceedToPayment')} - ${currency(cartSummary.totalAmount)}`" 
           severity="primary" 
-          @click="processOrder"
-          :loading="processingOrder"
+          @click="proceedToPayment"
           :disabled="!isFormValid"
+        />
+      </div>
+
+      <!-- Back to checkout button when in payment mode -->
+      <div v-if="showPayment" class="checkout-actions">
+        <Button 
+          :label="$t('checkout.backToCheckout')" 
+          severity="secondary" 
+          outlined 
+          @click="backToCheckout"
         />
       </div>
     </div>
@@ -362,6 +384,7 @@ import localCartService from '../../orders-processing/services/local-cart.servic
 import manufacturerService from '../../orders-processing/services/manufacturer.service.js';
 import orderService from '../../orders-processing/services/order.service.js';
 import fulfillmentService from '../../orders-processing/services/fulfillment.service.js';
+import StripeCheckout from '../../orders-processing/components/stripe-checkout.component.vue';
 import { env } from '../../env.js';
 
 const router = useRouter();
@@ -373,6 +396,8 @@ const loading = ref(false);
 const loadingManufacturers = ref(false);
 const processingOrder = ref(false);
 const formSubmitted = ref(false);
+const showPayment = ref(false);
+const paymentProcessing = ref(false);
 const cartProducts = ref([]);
 const cartSummary = ref({ totalAmount: 0, totalItems: 0 });
 const manufacturers = ref([]);
@@ -506,15 +531,32 @@ async function loadCart() {
 async function loadManufacturers() {
   try {
     loadingManufacturers.value = true;
+    
     const allManufacturers = await manufacturerService.getAllManufacturers();
+    
+    if (!Array.isArray(allManufacturers)) {
+      throw new Error('Invalid manufacturers data format');
+    }
+
     manufacturers.value = allManufacturers;
+    
+    if (manufacturers.value.length === 0) {
+      toast.add({
+        severity: 'warn',
+        summary: t('checkout.warning'),
+        detail: t('checkout.noManufacturers'),
+        life: 4000
+      });
+    }
+    
   } catch (error) {
     console.error('Failed to load manufacturers:', error);
+    
     toast.add({
       severity: 'error',
       summary: t('checkout.error'),
-      detail: t('checkout.loadManufacturersError'),
-      life: 3000
+      detail: t('checkout.loadManufacturersError') + ': ' + error.message,
+      life: 5000
     });
   } finally {
     loadingManufacturers.value = false;
@@ -683,38 +725,31 @@ function selectManufacturer(manufacturer) {
 }
 
 async function onManufacturerChange() {
-  if (!selectedManufacturer.value) return;
+  if (!selectedManufacturer.value) {
+    return;
+  }
   
   try {
-    // Update fulfillment when manufacturer changes
-    const fulfillmentData = {
-      manufacturer_id: selectedManufacturer.value.id,
-      items: cartProducts.value.map(product => ({
-        product_id: product.id,
-        quantity: product.cartQuantity
-      })),
-      shipping_address: shippingInfo.value
-    };
-    
-    // Update fulfillment estimate
-    const fulfillmentEstimate = await fulfillmentService.calculateFulfillment(fulfillmentData);
+    // Show manufacturer selection feedback with estimated delivery time
+    const estimatedDays = selectedManufacturer.value.averageProductionTime || 7;
+    const deliveryRange = selectedManufacturer.value.estimatedDeliveryRange?.display || `${estimatedDays}-${estimatedDays + 7} days`;
     
     toast.add({
       severity: 'info',
       summary: t('checkout.manufacturerSelected'),
       detail: t('checkout.fulfillmentUpdated', { 
         name: selectedManufacturer.value.name,
-        days: fulfillmentEstimate.estimatedDays || selectedManufacturer.value.averageProductionTime || 7
+        days: deliveryRange
       }),
       life: 4000
     });
   } catch (error) {
-    console.error('Failed to update fulfillment:', error);
+    console.error('Error in onManufacturerChange:', error);
     // Don't show error to user as this is not critical
   }
 }
 
-async function processOrder() {
+function proceedToPayment() {
   formSubmitted.value = true;
   
   if (!isFormValid.value || !selectedManufacturer.value) {
@@ -727,10 +762,20 @@ async function processOrder() {
     return;
   }
 
+  showPayment.value = true;
+}
+
+function backToCheckout() {
+  showPayment.value = false;
+}
+
+function handlePaymentProcessing(isProcessing) {
+  paymentProcessing.value = isProcessing;
+}
+
+async function handlePaymentSuccess(paymentIntent) {
   try {
-    processingOrder.value = true;
-    
-    // Create order data
+    // Create order data after successful payment
     const orderData = {
       items: cartProducts.value.map(product => ({
         product_id: product.id,
@@ -740,11 +785,29 @@ async function processOrder() {
       })),
       total_amount: cartSummary.value.totalAmount,
       manufacturer_id: selectedManufacturer.value.id,
-      shipping_address: shippingInfo.value
+      shipping_address: shippingInfo.value,
+      payment_intent_id: paymentIntent.id, // Include Stripe payment intent ID
+      payment_status: 'paid'
     };
 
     // Create the order
-    await orderService.createOrder(orderData);
+    const createdOrder = await orderService.createOrder(orderData);
+
+    // Create fulfillment after successful order creation
+    if (createdOrder && createdOrder.id) {
+      const fulfillmentData = {
+        orderId: createdOrder.id,
+        manufacturerId: selectedManufacturer.value.id,
+        items: cartProducts.value.map(product => ({
+          productId: product.id,
+          quantity: product.cartQuantity,
+          unitPrice: product.priceAmount
+        })),
+        priority: 'normal'
+      };
+
+      await fulfillmentService.createFulfillment(fulfillmentData);
+    }
     
     // Clear the cart
     await localCartService.clearCart();
@@ -756,20 +819,37 @@ async function processOrder() {
       life: 5000
     });
 
-    // Redirect to orders page or dashboard
-    router.push('/dashboard');
+    // Redirect to order confirmation or dashboard
+    setTimeout(() => {
+      router.push('/dashboard');
+    }, 2000);
     
   } catch (error) {
-    console.error('Failed to process order:', error);
+    console.error('Failed to process order after payment:', error);
     toast.add({
       severity: 'error',
       summary: t('checkout.error'),
       detail: t('checkout.orderError'),
-      life: 3000
+      life: 5000
     });
-  } finally {
-    processingOrder.value = false;
   }
+}
+
+function handlePaymentError(error) {
+  console.error('Payment failed:', error);
+  toast.add({
+    severity: 'error',
+    summary: t('payment.error.title'),
+    detail: error.message || t('payment.error.message'),
+    life: 5000
+  });
+}
+
+// Legacy function kept for compatibility
+async function processOrder() {
+  // This function is now replaced by the Stripe payment flow
+  // but kept for any existing references
+  proceedToPayment();
 }
 
 function goBack() {
@@ -778,9 +858,14 @@ function goBack() {
 
 // Lifecycle
 onMounted(async () => {
-  await loadCart();
-  if (cartProducts.value.length > 0) {
-    await loadManufacturers();
+  try {
+    await loadCart();
+    
+    if (cartProducts.value.length > 0) {
+      await loadManufacturers();
+    }
+  } catch (error) {
+    console.error('Error during initialization:', error);
   }
 });
 </script>
