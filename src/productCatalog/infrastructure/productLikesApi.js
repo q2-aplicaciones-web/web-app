@@ -1,5 +1,7 @@
+import env from "../../env";
+
 // Infraestructura: productLikesApi.js
-const API_URL = '/api/v1/products';
+const API_URL = env.apiBaseUrl + '/api/v1/products';
 
 export default {
   async like(productId, userId) {

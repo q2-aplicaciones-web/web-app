@@ -40,9 +40,10 @@
  */
 
 // Infraestructura: productCatalogApi.js
+import env from '../../env';
 import Product from '../domain/Product';
 
-const API_URL = '/api/v1/products';
+const API_URL = env.apiBaseUrl + '/api/v1/products';
 
 export default {
   async getAll(projectId) {
