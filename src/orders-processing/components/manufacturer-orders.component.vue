@@ -35,7 +35,7 @@
             <Divider />
             <div>
               <h3 class="text-lg font-semibold mb-1">Update Status</h3>
-              <Dropdown v-model="order.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-12rem mr-2" @change="onStatusChange(order)" />
+              <Select v-model="order.status" :options="statusOptions" optionLabel="label" optionValue="value" class="w-12rem mr-2" @change="onStatusChange(order)" />
             </div>
           </template>
         </Card>
@@ -52,7 +52,7 @@ import Card from 'primevue/card';
 import Tag from 'primevue/tag';
 import Button from 'primevue/button';
 import Divider from 'primevue/divider';
-import Dropdown from 'primevue/dropdown';
+import Select from 'primevue/select';
 import Toast from 'primevue/toast';
 import { useToast } from 'primevue/usetoast';
 

@@ -1,17 +1,13 @@
 <template>
   <div class="explore-container">
-    <div class="search-bar-container">
-      <SearchBar />
-    </div>
     <section class="catalog-container">
-      <ProductCatalog />
+      <ProductList />
     </section>
   </div>
 </template>
 
 <script setup>
-import SearchBar from '../../product-catalog/components/search-bar.vue';
-import ProductCatalog from '../../product-catalog/components/product-catalog.vue';
+import ProductList from '../../productCatalog/ui/ProductList.vue';
 </script>
 
 <style scoped>
