@@ -3,6 +3,7 @@ import HomeComponent from "../public/pages/home.component.vue";
 import CreateProjectComponent from "../design-lab/components/CreateProject.vue";
 import DashboardComponent from "../public/pages/dashboard.component.vue";
 import ShoppingCartComponent from "../public/pages/shopping-cart.component.vue";
+import CheckoutComponent from "../public/pages/checkout.component.vue";
 import { authenticationGuard, guestGuard } from "../iam/services/authentication.guard.js";
 import { useToast } from "primevue/usetoast";
 import { env } from "../env";
@@ -99,6 +100,13 @@ const routes = [
         name: "shopping-cart",
         component: ShoppingCartComponent,
         meta: { title: "Shopping Cart" },
+        beforeEnter: authenticationGuard
+    },
+    {
+        path: "/checkout",
+        name: "checkout",
+        component: CheckoutComponent,
+        meta: { title: "Checkout" },
         beforeEnter: authenticationGuard
     },
     {

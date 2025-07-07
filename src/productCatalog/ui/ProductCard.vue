@@ -15,6 +15,11 @@
     <template #content>
       <div class="product-info">
         <div class="product-price">$ {{ product.priceAmount }}</div>
+        <div v-if="product.garmentColor || product.garmentSize || product.garmentGender" class="product-details">
+          <span v-if="product.garmentColor" class="product-badge color-badge">{{ $t('product.color') }}: {{ product.garmentColor }}</span>
+          <span v-if="product.garmentSize" class="product-badge size-badge">{{ $t('product.size') }}: {{ product.garmentSize }}</span>
+          <span v-if="product.garmentGender" class="product-badge gender-badge">{{ $t('product.gender') }}: {{ product.garmentGender }}</span>
+        </div>
       </div>
     </template>
     <template #footer>
@@ -102,6 +107,38 @@ const props = defineProps({ product: Object, userId: String });
   font-weight: 700;
   font-size: 1.2rem;
   margin-bottom: 0.5rem;
+}
+
+.product-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.product-badge {
+  background: var(--surface-100);
+  color: var(--text-color-secondary);
+  padding: 0.125rem 0.375rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.color-badge {
+  background: var(--blue-100);
+  color: var(--blue-700);
+}
+
+.size-badge {
+  background: var(--green-100);
+  color: var(--green-700);
+}
+
+.gender-badge {
+  background: var(--purple-100);
+  color: var(--purple-700);
 }
 
 .card-footer-btns {

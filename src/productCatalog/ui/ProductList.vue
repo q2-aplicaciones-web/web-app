@@ -25,14 +25,20 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { useToast } from 'primevue/usetoast';
 import ProductCard from './ProductCard.vue';
 import productCatalogService from '../application/productCatalogService';
 import { authenticationService } from '../../iam/services/authentication.service.js';
+import localCartService from '../../orders-processing/services/local-cart.service.js';
 
 const products = ref([]);
 const loading = ref(false);
 const error = ref('');
 const userId = authenticationService.currentUserId?.value || 'demo-user';
+
+const { t } = useI18n();
+const toast = useToast();
 
 async function fetchProducts() {
   loading.value = true;
@@ -61,8 +67,24 @@ function viewProduct(product) {
   alert(`Product: ${product.projectTitle}`);
 }
 
-function addToCart(product) {
-  alert(`Added to cart: ${product.projectTitle}`);
+async function addToCart(product) {
+  try {
+    await localCartService.addToCart(product.id);
+    toast.add({
+      severity: 'success',
+      summary: t('catalog.addedToCart'),
+      detail: `${product.projectTitle || product.name} ${t('catalog.addedToCart')}`,
+      life: 3000
+    });
+  } catch (error) {
+    console.error('Failed to add to cart:', error);
+    toast.add({
+      severity: 'error',
+      summary: t('cart.error'),
+      detail: t('cart.updateError'),
+      life: 3000
+    });
+  }
 }
 </script>
 
