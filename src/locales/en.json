@@ -350,6 +350,7 @@
       "noProjects": "No projects yet",
       "createFirstMessage": "Create your first design project to get started!",
       "createFirst": "Create First Project",
+      "emptyTip": "You can create your first project to start designing custom garments.",
       "created": "Created",
       "updated": "Updated",
       "createProduct": "Create Product",
