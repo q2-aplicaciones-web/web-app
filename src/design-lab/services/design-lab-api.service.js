@@ -1,4 +1,5 @@
 import axios from 'axios';
+import env from '../../env';
 
 /**
  * Design Lab API Service - Maps directly to API endpoints
@@ -7,7 +8,7 @@ import axios from 'axios';
 class DesignLabApiService {
     constructor() {
         // Use environment variables directly - no design lab path needed
-        this.baseURL = import.meta.env.VITE_API_BASE_URL; // http://localhost:5297
+        this.baseURL = env.apiBaseUrl
         this.axiosInstance = axios.create({
             baseURL: this.baseURL,
             headers: {

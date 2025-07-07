@@ -3,6 +3,7 @@ import { SignInRequest } from '../model/sign-in.request.js';
 import { SignInResponse } from '../model/sign-in.response.js';
 import { SignUpRequest } from '../model/sign-up.request.js';
 import { SignUpResponse } from '../model/sign-up.response.js';
+import env from '../../env.js';
 
 /**
  * Authentication Service
@@ -28,7 +29,7 @@ class AuthenticationService {
     this.userRoles = computed(() => this.state.roles);
 
     // API base URL from environment
-    this.basePath = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5297';
+    this.basePath = env.apiBaseUrl || 'http://localhost:5297';
 
     // Auto-restore session on service initialization
     this.checkStoredAuthentication();
