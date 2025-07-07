@@ -3,17 +3,22 @@
  * Uses the existing VITE_GARMENT_COLOR_IMAGE_URL for the 4x4 color grid
  */
 
+import { env } from '../../env.js';
+import { CLOUDINARY_CONFIG } from '../../consts.js';
+
 export class CloudinaryService {
     constructor() {
-        // Cloudinary configuration
-        this.cloudName = 'dkkfv72vo';
-        this.uploadPreset = 'teelab'; // For unsigned uploads
-        this.baseUrl = 'https://res.cloudinary.com';
+        // Cloudinary configuration from environment variables with fallbacks
+        this.cloudName = env.cloudinaryCloudName;
+        this.uploadPreset = env.cloudinaryUploadPreset;
+        this.folder = env.cloudinaryFolder;
+        this.baseUrl = 'https://res.cloudinary.com'; // For image delivery
+        this.uploadUrl = 'https://api.cloudinary.com'; // For image uploads
         
-        // Garment color sprite configuration
-        this.garmentSpriteUrl = import.meta.env.VITE_GARMENT_COLOR_IMAGE_URL;
-        this.spriteGridSize = 4; // 4x4 grid
-        this.segmentSize = 600; // Default segment size
+        // Garment color sprite configuration from environment
+        this.garmentSpriteUrl = env.garmentColorImageUrl;
+        this.spriteGridSize = CLOUDINARY_CONFIG.GARMENT_SPRITE.GRID_COLS; // 4x4 grid
+        this.segmentSize = CLOUDINARY_CONFIG.GARMENT_SPRITE.SEGMENT_WIDTH; // 600px
         
         // Color mapping (matches the 4x4 grid in the sprite AND backend enum values)
         this.garmentColors = [
@@ -141,7 +146,7 @@ export class CloudinaryService {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('upload_preset', this.uploadPreset);
-            formData.append('folder', 'design-lab');
+            formData.append('folder', this.folder);
             
             // Add optional parameters
             if (options.transformation) {
@@ -174,6 +179,7 @@ export class CloudinaryService {
                                     createdAt: result.created_at
                                 });
                             } catch (parseError) {
+                                console.error('Failed to parse upload response:', parseError);
                                 reject(new Error('Failed to parse upload response'));
                             }
                         } else {
@@ -185,14 +191,14 @@ export class CloudinaryService {
                         reject(new Error('Upload failed: Network error'));
                     });
 
-                    xhr.open('POST', `${this.baseUrl}/${this.cloudName}/image/upload`);
+                    xhr.open('POST', `${this.uploadUrl}/v1_1/${this.cloudName}/image/upload`);
                     xhr.send(formData);
                 });
             }
 
             // Fallback to fetch API without progress tracking
             const response = await fetch(
-                `${this.baseUrl}/${this.cloudName}/image/upload`,
+                `${this.uploadUrl}/v1_1/${this.cloudName}/image/upload`,
                 {
                     method: 'POST',
                     body: formData
