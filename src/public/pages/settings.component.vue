@@ -1,3 +1,4 @@
+
 <script setup>
 import { ref } from 'vue';
 import Card from 'primevue/card';
@@ -5,6 +6,9 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import { useToast } from 'primevue/usetoast';
 import { authenticationService } from '../../iam/services/authentication.service.js';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n();
 
 const toast = useToast();
 const showForm = ref(false);
@@ -49,34 +53,34 @@ async function registerManufacturer() {
   <div class="settings-page">
     <Card>
       <template #content>
-        <h2>Settings</h2>
-        <Button label="Register as Manufacturer" @click="showForm = !showForm" class="mb-3" />
+        <h2>{{ t('settings.title') }}</h2>
+        <Button :label="t('settings.registerManufacturer')" @click="showForm = !showForm" class="mb-3" />
         <form v-if="showForm" @submit.prevent="registerManufacturer" class="manufacturer-form">
           <div class="form-group">
-            <label>Name</label>
+            <label>{{ t('settings.name') }}</label>
             <InputText v-model="form.name" required />
           </div>
           <div class="form-group">
-            <label>Street</label>
+            <label>{{ t('settings.street') }}</label>
             <InputText v-model="form.address_Street" required />
           </div>
           <div class="form-group">
-            <label>City</label>
+            <label>{{ t('settings.city') }}</label>
             <InputText v-model="form.address_City" required />
           </div>
           <div class="form-group">
-            <label>Country</label>
+            <label>{{ t('settings.country') }}</label>
             <InputText v-model="form.address_Country" required />
           </div>
           <div class="form-group">
-            <label>State</label>
+            <label>{{ t('settings.state') }}</label>
             <InputText v-model="form.address_State" required />
           </div>
           <div class="form-group">
-            <label>Zip</label>
+            <label>{{ t('settings.zip') }}</label>
             <InputText v-model="form.address_Zip" required />
           </div>
-          <Button type="submit" label="Submit" :loading="loading" class="mt-2" />
+          <Button type="submit" :label="t('settings.submit')" :loading="loading" class="mt-2" />
         </form>
       </template>
     </Card>
